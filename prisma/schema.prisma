@@ -1,0 +1,156 @@
+// ── JJapkin AI Prisma Schema ───────────────────────
+// PRD v1.0 기반 데이터 모델
+//
+// DB 초기화:
+//   npx prisma db push         (스키마만 반영, 마이그레이션 없이)
+//   npx prisma migrate dev     (마이그레이션 파일 생성 + 반영)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─────────────────────────────────────────────────────
+// User — 사용자 계정
+// ─────────────────────────────────────────────────────
+model User {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email         String    @unique
+  name          String?
+  avatarUrl     String?   @map("avatar_url")
+  provider      String    @default("email") // "google" | "email"
+
+  plan          String    @default("free")  // free | pro | team
+  creditsUsed   Int       @default(0)       @map("credits_used")
+  creditsLimit  Int       @default(500)     @map("credits_limit")
+
+  createdAt     DateTime  @default(now())   @map("created_at")
+  updatedAt     DateTime  @updatedAt        @map("updated_at")
+
+  // 관계
+  documents     Document[]
+  brandStyles   BrandStyle[]
+
+  @@map("users")
+}
+
+// ─────────────────────────────────────────────────────
+// Document — 에디터에 작성한 문서
+// ─────────────────────────────────────────────────────
+model Document {
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId     String    @map("user_id") @db.Uuid
+  title      String    @default("Untitled")
+  rawText    String?   @map("raw_text") @db.Text
+
+  isPublic   Boolean   @default(false)    @map("is_public")
+  shareToken String?   @unique @map("share_token")
+
+  createdAt  DateTime  @default(now())    @map("created_at")
+  updatedAt  DateTime  @updatedAt         @map("updated_at")
+
+  // 관계
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  visuals    Visual[]
+
+  @@index([userId])
+  @@map("documents")
+}
+
+// ─────────────────────────────────────────────────────
+// Visual — 하나의 다이어그램/시각 요소
+// ─────────────────────────────────────────────────────
+model Visual {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  documentId     String   @map("document_id") @db.Uuid
+
+  sourceText     String   @map("source_text") @db.Text  // 원본 텍스트
+  diagramType    String   @map("diagram_type")           // flowchart|mindmap|process|comparison|list
+  excalidrawData Json     @map("excalidraw_data")        // Excalidraw 포맷 JSON
+
+  thumbnailUrl   String?  @map("thumbnail_url")
+  stateChecksum  String?  @map("state_checksum")
+
+  sortOrder      Int      @default(0)        @map("sort_order")
+
+  createdAt      DateTime @default(now())    @map("created_at")
+  updatedAt      DateTime @updatedAt         @map("updated_at")
+
+  // 관계
+  document       Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([documentId])
+  @@map("visuals")
+}
+
+// ─────────────────────────────────────────────────────
+// BrandStyle — 브랜드 스튜디오 (테마/컬러/폰트)
+// ─────────────────────────────────────────────────────
+model BrandStyle {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId       String   @map("user_id") @db.Uuid
+
+  name         String
+  primaryColor String?  @map("primary_color")  // '#3B82F6'
+  accentColor  String?  @map("accent_color")
+  fontFamily   String?  @map("font_family")
+  logoUrl      String?  @map("logo_url")
+
+  isDefault    Boolean  @default(false)       @map("is_default")
+
+  createdAt    DateTime @default(now())       @map("created_at")
+
+  // 관계
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("brand_styles")
+}
+
+// ─────────────────────────────────────────────────────
+// GenerationCache — 생성 결과 캐싱 (중복 생성 방지)
+// ─────────────────────────────────────────────────────
+model GenerationCache {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  textHash    String   @unique @map("text_hash")   // SHA256 of source_text
+  diagramType String   @map("diagram_type")
+  resultJson  Json     @map("result_json")         // 생성된 후보 다이어그램들
+
+  modelUsed   String?  @map("model_used")          // 'gpt-4o-mini' | 'claude-3-sonnet'
+  tokensUsed  Int?     @map("tokens_used")
+
+  cachedAt    DateTime @default(now())             @map("cached_at")
+  expiresAt   DateTime?                            @map("expires_at")
+
+  @@index([textHash])
+  @@index([expiresAt])
+  @@map("generation_cache")
+}
+
+// ─────────────────────────────────────────────────────
+// ApiUsageLog — API 사용량 추적 (과금 관리용)
+// ─────────────────────────────────────────────────────
+model ApiUsageLog {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String?  @map("user_id") @db.Uuid
+
+  model       String                          // 사용한 모델명
+  tokensInput Int      @map("tokens_input")
+  tokensOutput Int     @map("tokens_output")
+  cost        Float                          // USD
+
+  diagramType String   @map("diagram_type")
+  success     Boolean
+
+  createdAt   DateTime @default(now())       @map("created_at")
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("api_usage_logs")
+}
