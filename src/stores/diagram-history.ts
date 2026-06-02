@@ -27,14 +27,16 @@ export const useDiagramHistoryStore = create<DiagramHistoryState>((set) => ({
 
   addEntry: (candidate, text) =>
     set((s) => ({
+      // entry id는 고유해야 함. candidate.id("c1" 등)는 생성마다 재사용되므로
+      // 이를 그대로 쓰면 이전 히스토리를 덮어써 누적이 되지 않는다.
       entries: [
         {
-          id: candidate.id,
+          id: `hist_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
           candidate,
           createdAt: Date.now(),
           text: text.slice(0, 100),
         },
-        ...s.entries.filter((e) => e.id !== candidate.id),
+        ...s.entries,
       ].slice(0, 20), // 최대 20개 유지
     })),
 

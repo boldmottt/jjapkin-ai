@@ -1,16 +1,18 @@
 "use client";
 
 import { useDocumentStore, useGenerationStore, useEditorLayoutStore } from "@/stores";
+import { useDiagramHistoryStore } from "@/stores/diagram-history";
 import { MermaidPreview } from "@/features/diagram-generator/MermaidPreview";
 import { TypeSelector } from "@/features/diagram-generator/TypeSelector";
 import { useCallback, useEffect } from "react";
-import type { DiagramType } from "@/types";
+import type { DiagramType, GenerationCandidate } from "@/types";
 
 export function TextEditor() {
   const { rawText, setRawText, title, setTitle } = useDocumentStore();
   const { setStatus, setCandidates, setError } = useGenerationStore();
   const { activeDiagramType, setActiveDiagramType, setShowCandidatePanel } =
     useEditorLayoutStore();
+  const addHistoryEntry = useDiagramHistoryStore((s) => s.addEntry);
 
   const handleGenerate = useCallback(async () => {
     if (!rawText.trim()) return;
@@ -30,9 +32,12 @@ export function TextEditor() {
       const json = await res.json();
       if (!json.success) throw new Error(json.error?.message ?? "생성 실패");
 
-      setCandidates(json.data.candidates);
+      const candidates = json.data.candidates as GenerationCandidate[];
+      setCandidates(candidates);
       setActiveDiagramType(json.data.recommendedType);
       setShowCandidatePanel(true);
+      // 추천(첫) 후보를 생성 히스토리에 기록
+      if (candidates[0]) addHistoryEntry(candidates[0], rawText);
     } catch (err) {
       // setError가 status를 "error"로 전환함
       setError(err instanceof Error ? err.message : "알 수 없는 오류");
@@ -45,6 +50,7 @@ export function TextEditor() {
     setStatus,
     setActiveDiagramType,
     setShowCandidatePanel,
+    addHistoryEntry,
   ]);
 
   // ⌨️ Ctrl+Enter → 생성
