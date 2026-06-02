@@ -13,13 +13,15 @@ import {
   exportToIllustratorPdf,
   exportToEps,
 } from "../export-pipeline";
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useRef, useState, useCallback } from "react";
 import type { ExportFormat } from "@/components/editor/ExportModal";
+import type { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types";
 
 export function CanvasEditor() {
   const { status, selectedCandidateId, candidates } = useGenerationStore();
   const { activeDiagramType } = useEditorLayoutStore();
   const [exportModalOpen, setExportModalOpen] = useState(false);
+  const apiRef = useRef<ExcalidrawImperativeAPI | null>(null);
 
   const selectedCandidate = useMemo(() => {
     if (!selectedCandidateId) return null;
@@ -41,41 +43,42 @@ export function CanvasEditor() {
 
   const handleExport = useCallback(
     async (format: ExportFormat) => {
+      const api = apiRef.current;
+      if (!api) {
+        alert("캔버스가 아직 준비되지 않았습니다.");
+        return;
+      }
       try {
         const title = selectedCandidate?.ir.title ?? "diagram";
         switch (format) {
           case "ai-svg":
-            exportToIllustratorSvg({ filename: title, title });
+            await exportToIllustratorSvg({ api, filename: title, title });
             break;
           case "ai-pdf":
-            await exportToIllustratorPdf({ filename: title, title });
+            await exportToIllustratorPdf({ api, filename: title, title });
             break;
           case "eps":
-            await exportToEps({ filename: title, title });
+            await exportToEps({ api, filename: title, title });
             break;
           case "png":
-            await exportToPng({ filename: title });
+            await exportToPng({ api, filename: title });
             break;
           case "svg":
-            await exportToSvg({ filename: title });
+            await exportToSvg({ api, filename: title });
             break;
           case "pptx":
-            await exportToPptx({
-              elements: excalidrawElements,
-              filename: title,
-              title,
-            });
+            await exportToPptx({ api, filename: title, title });
             break;
           case "pdf":
-            await exportToPdf({ filename: title, title });
+            await exportToPdf({ api, filename: title, title });
             break;
         }
       } catch (err) {
         console.error("[CanvasEditor] Export failed:", err);
-        alert("내보내기에 실패했습니다.");
+        alert(err instanceof Error ? err.message : "내보내기에 실패했습니다.");
       }
     },
-    [selectedCandidate, excalidrawElements],
+    [selectedCandidate],
   );
 
   return (
@@ -105,7 +108,13 @@ export function CanvasEditor() {
             </div>
           </div>
         ) : showExcalidraw ? (
-          <ExcalidrawWrapper initialElements={excalidrawElements} theme="light" />
+          <ExcalidrawWrapper
+            initialElements={excalidrawElements}
+            onApiReady={(api) => {
+              apiRef.current = api;
+            }}
+            theme="light"
+          />
         ) : status === "error" ? (
           <div className="flex h-full items-center justify-center bg-muted/30">
             <div className="text-center text-destructive">

@@ -15,6 +15,7 @@
 
 import dynamic from "next/dynamic";
 import { useCallback } from "react";
+import type { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types";
 
 // Excalidraw는 CSR 전용 (window 객체 의존)
 const ExcalidrawLazy = dynamic(
@@ -39,6 +40,8 @@ interface ExcalidrawWrapperProps {
   initialElements?: ExcalidrawElement[];
   /** 편집 상태 변경 콜백 */
   onChange?: (elements: readonly ExcalidrawElement[]) => void;
+  /** imperative API 준비 콜백 (export/persist에 사용) */
+  onApiReady?: (api: ExcalidrawImperativeAPI) => void;
   /** 테마 (light/dark) */
   theme?: "light" | "dark";
   /** readonly 모드 (조감도) */
@@ -48,6 +51,7 @@ interface ExcalidrawWrapperProps {
 export function ExcalidrawWrapper({
   initialElements,
   onChange,
+  onApiReady,
   theme = "light",
   readOnly = false,
 }: ExcalidrawWrapperProps) {
@@ -68,6 +72,7 @@ export function ExcalidrawWrapper({
             theme,
           },
         }}
+        excalidrawAPI={onApiReady}
         onChange={handleChange as never}
         viewModeEnabled={readOnly}
         zenModeEnabled={false}
