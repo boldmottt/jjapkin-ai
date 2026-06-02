@@ -15,6 +15,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { getClientIp, checkRateLimit } from "@/lib/rate-limit";
 
 interface SaveDiagram {
   sourceText: string;
@@ -32,6 +33,9 @@ interface SaveBody {
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** PUT 요청 본문 최대 크기 (약 1MB) */
+const MAX_BODY_BYTES = 1_000_000;
 
 function anonEmail(anonId: string): string {
   return `anon:${anonId}`;
@@ -67,6 +71,25 @@ async function resolveOwnerId(
 // ── 저장 ────────────────────────────────────────────
 
 export async function PUT(request: Request) {
+  // IP 기반 레이트리밋 (분당 10회)
+  const ip = getClientIp(request);
+  const limit = checkRateLimit(`documents:${ip}`);
+  if (!limit.ok) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: {
+          code: "RATE_LIMIT",
+          message: "요청이 너무 많습니다. 잠시 후 다시 시도해주세요.",
+        },
+      },
+      {
+        status: 429,
+        headers: { "Retry-After": String(limit.retryAfter) },
+      },
+    );
+  }
+
   let body: SaveBody;
   try {
     body = await request.json();
@@ -77,6 +100,20 @@ export async function PUT(request: Request) {
         error: { code: "BAD_JSON", message: "잘못된 요청입니다." },
       },
       { status: 400 },
+    );
+  }
+
+  // 요청 본문 크기 제한
+  if (JSON.stringify(body).length > MAX_BODY_BYTES) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: {
+          code: "PAYLOAD_TOO_LARGE",
+          message: "문서가 너무 큽니다.",
+        },
+      },
+      { status: 413 },
     );
   }
 
@@ -152,6 +189,25 @@ export async function PUT(request: Request) {
 // ── 불러오기 ────────────────────────────────────────
 
 export async function GET(request: Request) {
+  // IP 기반 레이트리밋 (분당 10회)
+  const ip = getClientIp(request);
+  const limit = checkRateLimit(`documents:${ip}`);
+  if (!limit.ok) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: {
+          code: "RATE_LIMIT",
+          message: "요청이 너무 많습니다. 잠시 후 다시 시도해주세요.",
+        },
+      },
+      {
+        status: 429,
+        headers: { "Retry-After": String(limit.retryAfter) },
+      },
+    );
+  }
+
   const url = new URL(request.url);
   const documentId = url.searchParams.get("documentId");
   const anonId = url.searchParams.get("anonId") ?? undefined;
