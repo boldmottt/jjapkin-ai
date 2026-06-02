@@ -10,6 +10,12 @@ import type { DiagramIR } from "@/types";
 const ANON_KEY = "jjapkin:anonId";
 const DOC_KEY = "jjapkin:documentId";
 
+/** 저장된 anonId를 생성 없이 반환 (없으면 null). 로그인 claim에 사용 */
+export function getStoredAnonId(): string | null {
+  if (typeof localStorage === "undefined") return null;
+  return localStorage.getItem(ANON_KEY);
+}
+
 function uuid(): string {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
     return crypto.randomUUID();

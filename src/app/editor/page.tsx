@@ -7,6 +7,7 @@ import { TextEditor } from "@/features/text-editor/TextEditor";
 import { CanvasEditor } from "@/features/canvas-editor/CanvasEditor";
 import { CandidatePanel } from "@/features/diagram-generator/CandidatePanel";
 import { useDocumentPersistence } from "@/hooks/useDocumentPersistence";
+import { AuthButton } from "@/features/auth/AuthButton";
 import { useTheme } from "next-themes";
 import { Moon, Sun, ArrowLeft } from "lucide-react";
 
@@ -78,6 +79,7 @@ export default function EditorPage() {
               <Moon className="h-4 w-4" />
             )}
           </button>
+          <AuthButton />
         </div>
       </header>
 

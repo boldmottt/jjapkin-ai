@@ -11,6 +11,7 @@
 - **State:** Zustand + React Query
 - **AI:** DeepSeek (deepseek-chat) → OpenAI GPT-4o-mini → Anthropic Claude fallback
 - **DB:** PostgreSQL + Prisma (Supabase)
+- **Auth:** Supabase Auth (이메일 매직링크, 선택 — 미설정 시 익명 모드)
 - **Deploy:** Vercel
 
 ## 시작하기
