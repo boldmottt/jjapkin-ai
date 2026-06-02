@@ -35,14 +35,17 @@ export function MermaidPreview({ visible }: MermaidPreviewProps) {
         mermaid.initialize({
           startOnLoad: false,
           theme: "default",
-          securityLevel: "loose",
+          // 사용자 입력을 그대로 렌더링하므로 strict로 XSS 방지
+          securityLevel: "strict",
           flowchart: { useMaxWidth: false },
         });
 
+        // 렌더링마다 유니크한 ID 사용 → 임시 DOM 노드 충돌/잔여 방지
+        const renderId = `mermaid-preview-${Date.now()}`;
         // 텍스트에서 mermaid 코드블록 추출 시도
         // 또는 전체 텍스트를 mermaid로 해석
         const { svg: rendered } = await mermaid.render(
-          "mermaid-preview",
+          renderId,
           rawText.slice(0, 1000),
         );
 

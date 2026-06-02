@@ -9,7 +9,7 @@
 - **Styling:** Tailwind CSS + shadcn/ui
 - **Editor:** Excalidraw (@excalidraw/excalidraw)
 - **State:** Zustand + React Query
-- **AI:** OpenAI GPT-4o-mini (→ Anthropic Claude fallback)
+- **AI:** DeepSeek (deepseek-chat) → OpenAI GPT-4o-mini → Anthropic Claude fallback
 - **DB:** PostgreSQL + Prisma (Supabase)
 - **Deploy:** Vercel
 
@@ -21,7 +21,7 @@ npm install
 
 # 2. 환경변수 설정
 cp .env.template .env.local
-# → .env.local 파일을 편집하여 OPENAI_API_KEY 추가
+# → .env.local 파일을 편집하여 DEEPSEEK_API_KEY 추가 (OPENAI_API_KEY·ANTHROPIC_API_KEY는 폴백용 옵션)
 
 # 3. DB 초기화 (선택)
 npx prisma db push
@@ -60,7 +60,7 @@ src/
 │   └── export-pipeline/    # 내보내기
 ├── stores/                 # Zustand 상태 관리
 ├── lib/                    # 공통 라이브러리
-│   ├── ai/                 # OpenAIClient, Prompt, Parser, Cache
+│   ├── ai/                 # AI 클라이언트(DeepSeek/OpenAI/Claude), Prompt, Parser, Cache
 │   ├── db/                 # Prisma 클라이언트
 │   └── utils/              # cn() 유틸리티
 └── types/                  # 타입 정의
@@ -70,7 +70,7 @@ src/
 
 | 스프린트 | 기능 | 상태 |
 |:---:|------|:---:|
-| 1 | AI 파이프라인 (OpenAI/Claude, 프롬프트, 파서, 캐싱) | ✅ |
+| 1 | AI 파이프라인 (DeepSeek/OpenAI/Claude, 프롬프트, 파서, 캐싱) | ✅ |
 | 2 | Excalidraw 연동 (IR→Elements, 5종 레이아웃, 편집기) | ✅ |
 | 3 | 다이어그램 유형 선택기 + 편집 기능 | ✅ |
 | 4 | 내보내기 (PNG/SVG/PPT/PDF) | ✅ |

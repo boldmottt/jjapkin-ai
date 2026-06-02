@@ -1,7 +1,7 @@
 /**
  * AI 응답 파서
  *
- * OpenAI가 반환한 JSON을 DiagramIR, GenerationCandidate 로 변환
+ * AI(DeepSeek → OpenAI → Claude)가 반환한 JSON을 DiagramIR, GenerationCandidate 로 변환
  * Zod 스키마로 유효성 검사 + 기본값 보정
  */
 
@@ -42,7 +42,7 @@ const aiResponseSchema = z.object({
 // ── 파서 함수 ──────────────────────────────────────
 
 /**
- * OpenAI JSON 응답을 GenerationCandidate[] 로 변환
+ * AI JSON 응답을 GenerationCandidate[] 로 변환
  * 유효성 검사 실패 시 상세 오류 반환
  */
 export function parseAIResponse(rawJson: unknown): GenerationCandidate[] {
@@ -64,11 +64,14 @@ export function parseAIResponse(rawJson: unknown): GenerationCandidate[] {
       diagramType: c.diagramType,
       title: c.title,
       description: c.description,
-      nodes: c.nodes.map((n) => ({
-        ...n,
-        type: n.type ?? "process", // 기본값
-        color: n.color ?? DEFAULT_NODE_COLORS[n.type ?? "process"],
-      })),
+      nodes: c.nodes.map((n) => {
+        const type = n.type ?? "process"; // 기본값 보정
+        return {
+          ...n,
+          type,
+          color: n.color ?? DEFAULT_NODE_COLORS[type],
+        };
+      }),
       edges: c.edges.map((e) => ({
         ...e,
         label: e.label ?? undefined, // 빈 문자열 → undefined

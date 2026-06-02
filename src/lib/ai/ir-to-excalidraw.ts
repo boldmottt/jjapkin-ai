@@ -21,6 +21,9 @@ interface ExElement {
   text?: string;
   fontSize?: number;
   fontFamily?: number;   // Excalidraw 폰트 ID (1=hand-drawn, 2=normal, 3=code)
+  containerId?: string | null; // 컨테이너 바운드 텍스트가 속한 도형 id
+  textAlign?: "left" | "center" | "right";
+  verticalAlign?: "top" | "middle" | "bottom";
   // 도형 공통
   backgroundColor?: string;
   strokeColor?: string;
@@ -50,23 +53,48 @@ const FONT_FAMILY = 2; // normal
 // ── 메인 변환 함수 ──────────────────────────────────
 
 export function irToExcalidraw(ir: DiagramIR): ExElement[] {
+  // ID 생성기를 함수 스코프 클로저로 둠 → 호출마다 0부터 시작하여 멱등성 보장
+  let idCounter = 0;
+  const uid = () => `elem_${++idCounter}`;
+
   const elements: ExElement[] = [];
 
-  // 각 노드 → rectangle + text
+  // 각 노드 → rectangle + (컨테이너 바운드) text
   const nodePositions = layoutNodes(ir.nodes, ir.edges, ir.diagramType);
 
+  // node id → rectangle element id (화살표 바인딩에 사용)
+  const rectIdByNode = new Map<string, ExElement>();
+
   for (const pos of nodePositions) {
-    elements.push(createRectElement(pos));
-    elements.push(createTextElement(pos));
+    const rect = createRectElement(pos, uid);
+    const text = createTextElement(pos, rect.id, uid);
+    // 텍스트를 도형에 컨테이너 바운드로 연결 → 도형 이동 시 텍스트가 따라감
+    rect.boundElements = [{ id: text.id, type: "text" }];
+    rectIdByNode.set(pos.id, rect);
+    elements.push(rect, text);
   }
 
-  // 각 엣지 → arrow
+  // 각 엣지 → arrow (양 끝 도형에 바인딩)
   for (const edge of ir.edges) {
     const fromPos = nodePositions.find((n) => n.id === edge.from);
     const toPos = nodePositions.find((n) => n.id === edge.to);
     if (!fromPos || !toPos) continue;
 
-    elements.push(createArrowElement(fromPos, toPos, edge.label));
+    const fromRect = rectIdByNode.get(edge.from);
+    const toRect = rectIdByNode.get(edge.to);
+    const arrow = createArrowElement(
+      fromPos,
+      toPos,
+      uid,
+      fromRect?.id,
+      toRect?.id,
+      edge.label,
+    );
+    elements.push(arrow);
+
+    // 화살표를 양 끝 도형의 boundElements에 등록 → 노드 이동 시 화살표가 따라붙음
+    fromRect?.boundElements?.push({ id: arrow.id, type: "arrow" });
+    toRect?.boundElements?.push({ id: arrow.id, type: "arrow" });
   }
 
   return elements;
@@ -283,12 +311,7 @@ function layoutFlowchartRows(
 
 // ── Element 생성기 ──────────────────────────────────
 
-let _idCounter = 0;
-function uid(): string {
-  return `elem_${++_idCounter}`;
-}
-
-function createRectElement(pos: NodePosition): ExElement {
+function createRectElement(pos: NodePosition, uid: () => string): ExElement {
   return {
     type: "rectangle",
     id: uid(),
@@ -300,16 +323,19 @@ function createRectElement(pos: NodePosition): ExElement {
     strokeColor: "#1F2937",
     strokeWidth: STROKE_WIDTH,
     roughness: 0,
-    boundElements: [],
+    boundElements: [], // 호출부에서 text/arrow 바인딩이 추가됨
   };
 }
 
-function createTextElement(pos: NodePosition): ExElement {
-  const textId = uid();
-  // 텍스트를 rectangle 안에 가운데 정렬
+function createTextElement(
+  pos: NodePosition,
+  containerId: string,
+  uid: () => string,
+): ExElement {
+  // 컨테이너 바운드 텍스트: Excalidraw가 containerId 도형 안에 가운데 정렬로 배치
   return {
     type: "text",
-    id: textId,
+    id: uid(),
     x: pos.x + 10,
     y: pos.y + NODE_H / 2 - FONT_SIZE / 2,
     width: NODE_W - 20,
@@ -319,6 +345,9 @@ function createTextElement(pos: NodePosition): ExElement {
     fontFamily: FONT_FAMILY,
     strokeColor: "#1F2937",
     roughness: 0,
+    containerId,
+    textAlign: "center",
+    verticalAlign: "middle",
     boundElements: null,
   };
 }
@@ -326,6 +355,9 @@ function createTextElement(pos: NodePosition): ExElement {
 function createArrowElement(
   from: NodePosition,
   to: NodePosition,
+  uid: () => string,
+  fromId: string | undefined,
+  toId: string | undefined,
   /**
    * label은 향후 edge 라벨 렌더링에 사용 예정
    */
@@ -347,6 +379,9 @@ function createArrowElement(
     strokeColor: "#6B7280",
     strokeWidth: STROKE_WIDTH,
     roughness: 0,
+    // 양 끝 도형에 바인딩 → 노드를 움직이면 화살표 끝점이 따라감
+    startBinding: fromId ? { elementId: fromId, focus: 0, gap: 4 } : undefined,
+    endBinding: toId ? { elementId: toId, focus: 0, gap: 4 } : undefined,
     points: [
       [fromX - Math.min(fromX, toX), fromY - Math.min(fromY, toY)],
       [toX - Math.min(fromX, toX), toY - Math.min(fromY, toY)],

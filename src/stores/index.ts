@@ -91,8 +91,14 @@ export const useDocumentStore = create<DocumentState>((set) => ({
 // ── AI 파이프라인 상태 ──────────────────────────────
 
 interface AiPipelineState {
-  selectedModel: "deepseek-chat" | "gpt-4o-mini" | "gpt-4o" | "claude-3-sonnet";
+  /** 실제 폴백 체인(openai.ts)에서 사용하는 모델 식별자와 일치 */
+  selectedModel: "deepseek-chat" | "gpt-4o-mini" | "claude-3-5-sonnet";
   cacheEnabled: boolean;
+  /**
+   * UI 표시용 캐시일 뿐, 진실의 원천이 아님.
+   * 실제 과금/한도는 서버(User.creditsUsed)에서 관리해야 하며
+   * 새로고침 시 초기값으로 리셋됨.
+   */
   creditsRemaining: number;
 
   setModel: (model: AiPipelineState["selectedModel"]) => void;
