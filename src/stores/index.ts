@@ -38,10 +38,17 @@ interface GenerationState {
   candidates: GenerationCandidate[];
   selectedCandidateId: string | null;
   error: string | null;
+  /**
+   * 후보 id → 사용자가 편집한 Excalidraw 장면 요소.
+   * 후보를 전환했다가 돌아와도 편집이 보존되도록 세션 동안 유지한다.
+   * (요소 형태는 Excalidraw 내부 타입이라 unknown[]으로 느슨하게 보관)
+   */
+  editedScenes: Record<string, readonly unknown[]>;
 
   setStatus: (status: GenerationStatus) => void;
   setCandidates: (candidates: GenerationCandidate[]) => void;
   selectCandidate: (id: string) => void;
+  saveScene: (candidateId: string, elements: readonly unknown[]) => void;
   setError: (error: string | null) => void;
   reset: () => void;
 }
@@ -51,6 +58,7 @@ export const useGenerationStore = create<GenerationState>((set) => ({
   candidates: [],
   selectedCandidateId: null,
   error: null,
+  editedScenes: {},
 
   setStatus: (status) => set({ status }),
   setCandidates: (candidates) =>
@@ -58,10 +66,16 @@ export const useGenerationStore = create<GenerationState>((set) => ({
       candidates,
       // 추천(첫 번째) 후보를 자동 선택해 생성 직후 캔버스가 비지 않도록 함
       selectedCandidateId: candidates[0]?.id ?? null,
+      // 새 생성 결과이므로 이전 편집 캐시는 비움
+      editedScenes: {},
       status: "success",
       error: null,
     }),
   selectCandidate: (id) => set({ selectedCandidateId: id }),
+  saveScene: (candidateId, elements) =>
+    set((s) => ({
+      editedScenes: { ...s.editedScenes, [candidateId]: elements },
+    })),
   setError: (error) => set({ error, status: "error" }),
   reset: () =>
     set({
@@ -69,6 +83,7 @@ export const useGenerationStore = create<GenerationState>((set) => ({
       candidates: [],
       selectedCandidateId: null,
       error: null,
+      editedScenes: {},
     }),
 }));
 

@@ -18,10 +18,12 @@ import type { ExportFormat } from "@/components/editor/ExportModal";
 import type { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types";
 
 export function CanvasEditor() {
-  const { status, selectedCandidateId, candidates } = useGenerationStore();
+  const { status, selectedCandidateId, candidates, saveScene } =
+    useGenerationStore();
   const { activeDiagramType } = useEditorLayoutStore();
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const apiRef = useRef<ExcalidrawImperativeAPI | null>(null);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const selectedCandidate = useMemo(() => {
     if (!selectedCandidateId) return null;
@@ -30,6 +32,9 @@ export function CanvasEditor() {
 
   const excalidrawElements = useMemo(() => {
     if (!selectedCandidate) return [];
+    // 이전에 편집해 둔 장면이 있으면 그것을 복원 (후보 전환 시 편집 보존)
+    const saved = useGenerationStore.getState().editedScenes[selectedCandidate.id];
+    if (saved && saved.length > 0) return saved as ExcalidrawElement[];
     try {
       return irToExcalidraw(selectedCandidate.ir) as ExcalidrawElement[];
     } catch (err) {
@@ -37,6 +42,18 @@ export function CanvasEditor() {
       return [];
     }
   }, [selectedCandidate]);
+
+  // 편집 내용을 디바운스 저장 (후보 전환 후 돌아와도 유지)
+  const handleSceneChange = useCallback(
+    (elements: readonly ExcalidrawElement[]) => {
+      if (!selectedCandidateId) return;
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = setTimeout(() => {
+        saveScene(selectedCandidateId, elements);
+      }, 500);
+    },
+    [selectedCandidateId, saveScene],
+  );
 
   const showExcalidraw =
     selectedCandidateId && status === "success" && excalidrawElements.length > 0;
@@ -109,10 +126,13 @@ export function CanvasEditor() {
           </div>
         ) : showExcalidraw ? (
           <ExcalidrawWrapper
+            // 후보가 바뀌면 remount하여 해당 후보의 (편집된) 장면을 로드
+            key={selectedCandidateId}
             initialElements={excalidrawElements}
             onApiReady={(api) => {
               apiRef.current = api;
             }}
+            onChange={handleSceneChange}
             theme="light"
           />
         ) : status === "error" ? (
