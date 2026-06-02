@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useRef, useState } from "react";
-import { useEditorLayoutStore, useGenerationStore } from "@/stores";
+import { useEditorLayoutStore, useGenerationStore, useDocumentStore } from "@/stores";
 import { TextEditor } from "@/features/text-editor/TextEditor";
 import { CanvasEditor } from "@/features/canvas-editor/CanvasEditor";
 import { CandidatePanel } from "@/features/diagram-generator/CandidatePanel";
@@ -14,6 +14,7 @@ import { Moon, Sun, ArrowLeft } from "lucide-react";
 export default function EditorPage() {
   const { showCandidatePanel } = useEditorLayoutStore();
   const { candidates, selectedCandidateId } = useGenerationStore();
+  const { isDirty, lastSavedAt } = useDocumentStore();
   const { theme, setTheme } = useTheme();
 
   // 문서 자동 저장 + 새로고침 복원
@@ -64,6 +65,11 @@ export default function EditorPage() {
           {selectedCandidate && (
             <span className="hidden rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground sm:inline">
               {selectedCandidate.ir.diagramType}
+            </span>
+          )}
+          {lastSavedAt && (
+            <span className="hidden text-xs text-muted-foreground/70 sm:inline">
+              {isDirty ? "저장 중…" : "저장됨"}
             </span>
           )}
         </div>

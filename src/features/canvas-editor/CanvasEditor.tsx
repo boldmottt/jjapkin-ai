@@ -16,6 +16,9 @@ import {
 import { useMemo, useRef, useState, useCallback } from "react";
 import type { ExportFormat } from "@/components/editor/ExportModal";
 import type { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types";
+import { toast } from "@/stores/toast";
+import { DIAGRAM_TYPE_LABELS } from "@/types";
+import type { DiagramType } from "@/types";
 
 export function CanvasEditor() {
   const { status, selectedCandidateId, candidates, saveScene } =
@@ -62,7 +65,7 @@ export function CanvasEditor() {
     async (format: ExportFormat) => {
       const api = apiRef.current;
       if (!api) {
-        alert("캔버스가 아직 준비되지 않았습니다.");
+        toast.error("캔버스가 아직 준비되지 않았습니다.");
         return;
       }
       try {
@@ -90,9 +93,10 @@ export function CanvasEditor() {
             await exportToPdf({ api, filename: title, title });
             break;
         }
+        toast.success(`${format.toUpperCase()} 내보내기 완료`);
       } catch (err) {
         console.error("[CanvasEditor] Export failed:", err);
-        alert(err instanceof Error ? err.message : "내보내기에 실패했습니다.");
+        toast.error(err instanceof Error ? err.message : "내보내기에 실패했습니다.");
       }
     },
     [selectedCandidate],
@@ -103,7 +107,9 @@ export function CanvasEditor() {
       {/* Toolbar */}
       <div className="flex h-10 items-center gap-2 border-b px-3 text-xs">
         <span className="text-muted-foreground">
-          {activeDiagramType ? `유형: ${activeDiagramType}` : "다이어그램을 생성해주세요"}
+          {activeDiagramType
+            ? `유형: ${DIAGRAM_TYPE_LABELS[activeDiagramType as DiagramType] ?? activeDiagramType}`
+            : "다이어그램을 생성해주세요"}
         </span>
         <div className="flex-1" />
         <button

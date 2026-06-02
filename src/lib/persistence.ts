@@ -49,20 +49,23 @@ export interface LoadedDocument {
   diagram: PersistedDiagram | null;
 }
 
-/** 현재 브라우저의 문서 저장 (best-effort) */
+/** 현재 브라우저의 문서 저장 (best-effort). 실제 DB 저장 여부를 반환 */
 export async function saveDocument(payload: {
   title: string;
   rawText: string;
   diagram: PersistedDiagram | null;
-}): Promise<void> {
+}): Promise<boolean> {
   const documentId = getOrCreate(DOC_KEY);
   const anonId = getOrCreate(ANON_KEY);
 
-  await fetch("/api/documents", {
+  const res = await fetch("/api/documents", {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ documentId, anonId, ...payload }),
   });
+  if (!res.ok) return false;
+  const json = await res.json().catch(() => null);
+  return Boolean(json?.persisted);
 }
 
 /** 현재 브라우저의 문서 불러오기. 없으면 null */

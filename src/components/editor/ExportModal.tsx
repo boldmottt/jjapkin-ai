@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Download, FileImage, FileText, Presentation, PenTool } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 
@@ -82,6 +82,16 @@ export function ExportModal({ open, onClose, onExport }: ExportModalProps) {
   const [selected, setSelected] = useState<ExportFormat>("ai-svg");
   const [exporting, setExporting] = useState(false);
 
+  // Esc로 닫기 (내보내는 중에는 막음)
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !exporting) onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, exporting, onClose]);
+
   if (!open) return null;
 
   const handleExport = async () => {
@@ -95,7 +105,15 @@ export function ExportModal({ open, onClose, onExport }: ExportModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      onClick={(e) => {
+        // 바깥(backdrop) 클릭 시 닫기
+        if (e.target === e.currentTarget && !exporting) onClose();
+      }}
+      role="dialog"
+      aria-modal="true"
+    >
       <div className="w-full max-w-md rounded-xl bg-background p-6 shadow-xl">
         <h3 className="mb-1 text-lg font-semibold">내보내기</h3>
         <p className="mb-4 text-xs text-muted-foreground">

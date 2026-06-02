@@ -6,16 +6,36 @@ import { MermaidPreview } from "@/features/diagram-generator/MermaidPreview";
 import { TypeSelector } from "@/features/diagram-generator/TypeSelector";
 import { useCallback, useEffect } from "react";
 import type { DiagramType, GenerationCandidate } from "@/types";
+import { toast } from "@/stores/toast";
+
+const MIN_CHARS = 10;
+const MAX_CHARS = 5000;
 
 export function TextEditor() {
   const { rawText, setRawText, title, setTitle } = useDocumentStore();
-  const { setStatus, setCandidates, setError } = useGenerationStore();
+  const { status, error, setStatus, setCandidates, setError } = useGenerationStore();
   const { activeDiagramType, setActiveDiagramType, setShowCandidatePanel } =
     useEditorLayoutStore();
   const addHistoryEntry = useDiagramHistoryStore((s) => s.addEntry);
 
+  const isLoading = status === "loading";
+  const trimmedLen = rawText.trim().length;
+  const tooShort = trimmedLen > 0 && trimmedLen < MIN_CHARS;
+  const tooLong = rawText.length > MAX_CHARS;
+  const canGenerate = trimmedLen >= MIN_CHARS && !tooLong && !isLoading;
+
   const handleGenerate = useCallback(async () => {
-    if (!rawText.trim()) return;
+    if (isLoading) return; // 중복 제출 방지
+    const text = rawText.trim();
+    if (text.length < MIN_CHARS) {
+      toast.error(`최소 ${MIN_CHARS}자 이상 입력해주세요.`);
+      return;
+    }
+    if (rawText.length > MAX_CHARS) {
+      toast.error(`최대 ${MAX_CHARS.toLocaleString()}자까지 지원됩니다.`);
+      return;
+    }
+
     setError(null);
     setStatus("loading");
 
@@ -38,11 +58,15 @@ export function TextEditor() {
       setShowCandidatePanel(true);
       // 추천(첫) 후보를 생성 히스토리에 기록
       if (candidates[0]) addHistoryEntry(candidates[0], rawText);
+      toast.success(`${candidates.length}개의 다이어그램을 생성했어요.`);
     } catch (err) {
       // setError가 status를 "error"로 전환함
-      setError(err instanceof Error ? err.message : "알 수 없는 오류");
+      const msg = err instanceof Error ? err.message : "알 수 없는 오류";
+      setError(msg);
+      toast.error(msg);
     }
   }, [
+    isLoading,
     rawText,
     activeDiagramType,
     setCandidates,
@@ -53,7 +77,7 @@ export function TextEditor() {
     addHistoryEntry,
   ]);
 
-  // ⌨️ Ctrl+Enter → 생성
+  // ⌨️ Ctrl/Cmd+Enter → 생성
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
@@ -106,16 +130,39 @@ export function TextEditor() {
 
       {/* 하단 정보 + 생성 버튼 */}
       <div className="mt-3 space-y-2">
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>{rawText.length}자</span>
-          <span>Ctrl+Enter 로 생성</span>
+        <div className="flex items-center justify-between text-xs">
+          <span
+            className={
+              tooShort || tooLong ? "text-destructive" : "text-muted-foreground"
+            }
+          >
+            {rawText.length.toLocaleString()}자
+            {tooShort && ` · 최소 ${MIN_CHARS}자`}
+            {tooLong && ` · 최대 ${MAX_CHARS.toLocaleString()}자 초과`}
+          </span>
+          <span className="text-muted-foreground">⌘/Ctrl+Enter 로 생성</span>
         </div>
+
+        {/* 생성 실패 사유 (패널이 닫혀 있어도 보이도록 여기에 표시) */}
+        {status === "error" && error && (
+          <p className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs text-destructive">
+            {error}
+          </p>
+        )}
+
         <button
           onClick={handleGenerate}
-          disabled={!rawText.trim()}
-          className="w-full rounded-lg bg-primary py-3 font-semibold text-primary-foreground transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+          disabled={!canGenerate}
+          className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary py-3 font-semibold text-primary-foreground transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          ✨ 다이어그램 생성
+          {isLoading ? (
+            <>
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground/40 border-t-primary-foreground" />
+              생성 중...
+            </>
+          ) : (
+            <>✨ 다이어그램 생성</>
+          )}
         </button>
       </div>
     </div>

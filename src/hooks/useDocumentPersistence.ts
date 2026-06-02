@@ -67,7 +67,7 @@ export function useDocumentPersistence() {
         ? g.editedScenes[g.selectedCandidateId]
         : undefined;
 
-      void saveDocument({
+      saveDocument({
         title,
         rawText,
         diagram: selected
@@ -77,9 +77,14 @@ export function useDocumentPersistence() {
               data: { ir: selected.ir, elements: elements ?? [] },
             }
           : null,
-      }).catch(() => {
-        /* best-effort */
-      });
+      })
+        .then((persisted) => {
+          // 실제 DB 저장에 성공했을 때만 "저장됨"으로 표시
+          if (persisted) useDocumentStore.getState().markSaved();
+        })
+        .catch(() => {
+          /* best-effort */
+        });
     }, 1500);
 
     return () => {
