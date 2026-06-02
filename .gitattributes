@@ -1,0 +1,4 @@
+# 런처 스크립트 줄바꿈 고정 (OS별 깨짐 방지)
+*.bat      text eol=crlf
+*.command  text eol=lf
+*.sh       text eol=lf

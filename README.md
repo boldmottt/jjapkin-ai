@@ -16,6 +16,17 @@
 
 ## 시작하기
 
+### 🖱️ 원클릭 실행 (가장 쉬움)
+
+- **Windows:** `start.bat` 더블클릭
+- **macOS:** `start.command` 더블클릭 (최초엔 우클릭 → "열기")
+- **Linux:** 터미널에서 `./start.command` 실행
+
+자동으로 의존성을 설치하고 서버를 켠 뒤 브라우저(`http://localhost:3000`)를 엽니다.
+(Node.js 18+ 필요. AI 생성 기능은 `.env.local`에 `DEEPSEEK_API_KEY` 설정 시 동작)
+
+### 수동 실행
+
 ```bash
 # 1. 의존성 설치
 npm install
