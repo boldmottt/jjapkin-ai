@@ -1,14 +1,18 @@
 /**
  * 클라이언트 문서 영속화 헬퍼
  *
- * 인증이 없으므로 브라우저 localStorage에 anonId/documentId를 보관하고
- * /api/documents 와 통신한다. 새로고침/재방문 시 같은 문서를 복원한다.
+ * 로컬 우선(localStorage) + 서버 동기화(/api/documents) 전략.
+ *   - 로그인/DB가 없어도(= 로컬 모드) 브라우저에 저장되어 새로고침/재방문에도 유지
+ *   - 로그인/DB가 있으면 서버를 우선 사용하고 로컬은 캐시로 동기화
+ *
+ * 브라우저별 anonId/documentId는 localStorage에 보관한다.
  */
 
 import type { DiagramIR } from "@/types";
 
 const ANON_KEY = "jjapkin:anonId";
 const DOC_KEY = "jjapkin:documentId";
+const LOCAL_DOC_KEY = "jjapkin:doc"; // 로컬 모드 문서 캐시
 
 /** 저장된 anonId를 생성 없이 반환 (없으면 null). 로그인 claim에 사용 */
 export function getStoredAnonId(): string | null {
@@ -49,35 +53,76 @@ export interface LoadedDocument {
   diagram: PersistedDiagram | null;
 }
 
-/** 현재 브라우저의 문서 저장 (best-effort). 실제 DB 저장 여부를 반환 */
-export async function saveDocument(payload: {
-  title: string;
-  rawText: string;
-  diagram: PersistedDiagram | null;
-}): Promise<boolean> {
-  const documentId = getOrCreate(DOC_KEY);
-  const anonId = getOrCreate(ANON_KEY);
+// ── 로컬(localStorage) 저장소 ───────────────────────
 
-  const res = await fetch("/api/documents", {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ documentId, anonId, ...payload }),
-  });
-  if (!res.ok) return false;
-  const json = await res.json().catch(() => null);
-  return Boolean(json?.persisted);
+function saveLocal(doc: LoadedDocument): void {
+  if (typeof localStorage === "undefined") return;
+  try {
+    localStorage.setItem(LOCAL_DOC_KEY, JSON.stringify(doc));
+  } catch {
+    // 용량 초과 등 — 무시 (서버 동기화가 있다면 거기에 의존)
+  }
 }
 
-/** 현재 브라우저의 문서 불러오기. 없으면 null */
-export async function loadDocument(): Promise<LoadedDocument | null> {
-  const documentId = getOrCreate(DOC_KEY);
-  const anonId = getOrCreate(ANON_KEY);
+function loadLocal(): LoadedDocument | null {
+  if (typeof localStorage === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(LOCAL_DOC_KEY);
+    return raw ? (JSON.parse(raw) as LoadedDocument) : null;
+  } catch {
+    return null;
+  }
+}
 
-  const res = await fetch(
-    `/api/documents?documentId=${documentId}&anonId=${anonId}`,
-  );
-  if (!res.ok) return null;
-  const json = await res.json();
-  if (!json.success || !json.found || !json.document) return null;
-  return json.document as LoadedDocument;
+// ── 저장 ────────────────────────────────────────────
+
+/**
+ * 문서 저장. 로컬에 즉시 저장한 뒤 서버에 best-effort 동기화한다.
+ * 로컬 저장에 성공하면 true (로컬 모드에서도 "저장됨"으로 표시 가능).
+ */
+export async function saveDocument(payload: LoadedDocument): Promise<boolean> {
+  // 1) 로컬 우선 저장 (로그인/DB 없어도 동작)
+  saveLocal(payload);
+
+  // 2) 서버 동기화 (가능할 때) — 실패해도 무시
+  try {
+    const documentId = getOrCreate(DOC_KEY);
+    const anonId = getOrCreate(ANON_KEY);
+    await fetch("/api/documents", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ documentId, anonId, ...payload }),
+    });
+  } catch {
+    // 로컬 모드(네트워크/DB 없음) — 로컬 저장으로 충분
+  }
+
+  return true;
+}
+
+// ── 불러오기 ────────────────────────────────────────
+
+/**
+ * 문서 불러오기. 서버(로그인/DB)를 우선 시도하고, 없으면 로컬 캐시로 폴백.
+ */
+export async function loadDocument(): Promise<LoadedDocument | null> {
+  try {
+    const documentId = getOrCreate(DOC_KEY);
+    const anonId = getOrCreate(ANON_KEY);
+    const res = await fetch(
+      `/api/documents?documentId=${documentId}&anonId=${anonId}`,
+    );
+    if (res.ok) {
+      const json = await res.json();
+      if (json?.success && json.found && json.document) {
+        const doc = json.document as LoadedDocument;
+        saveLocal(doc); // 로컬 캐시 갱신
+        return doc;
+      }
+    }
+  } catch {
+    // 서버 불가 — 로컬 폴백
+  }
+
+  return loadLocal();
 }

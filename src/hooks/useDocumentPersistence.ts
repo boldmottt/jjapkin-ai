@@ -78,9 +78,9 @@ export function useDocumentPersistence() {
             }
           : null,
       })
-        .then((persisted) => {
-          // 실제 DB 저장에 성공했을 때만 "저장됨"으로 표시
-          if (persisted) useDocumentStore.getState().markSaved();
+        .then((saved) => {
+          // 로컬 저장만 성공해도 "저장됨"으로 표시 (로컬 모드)
+          if (saved) useDocumentStore.getState().markSaved();
         })
         .catch(() => {
           /* best-effort */
