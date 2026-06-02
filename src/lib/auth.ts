@@ -33,6 +33,7 @@ export async function getSessionEmail(): Promise<string | null> {
 export async function getCurrentUser(): Promise<AppUser | null> {
   const email = await getSessionEmail();
   if (!email) return null;
+  if (!prisma) return null;
   try {
     const user = await prisma.user.upsert({
       where: { email },

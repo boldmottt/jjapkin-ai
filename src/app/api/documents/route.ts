@@ -30,7 +30,8 @@ interface SaveBody {
   diagram?: SaveDiagram | null;
 }
 
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function anonEmail(anonId: string): string {
   return `anon:${anonId}`;
@@ -41,6 +42,8 @@ async function resolveOwnerId(
   anonId: string | undefined,
   opts: { createAnon: boolean },
 ): Promise<string | null> {
+  if (!prisma) return null;
+
   const authed = await getCurrentUser();
   if (authed) return authed.id;
 
@@ -54,7 +57,10 @@ async function resolveOwnerId(
     });
     return user.id;
   }
-  const user = await prisma.user.findUnique({ where: { email }, select: { id: true } });
+  const user = await prisma.user.findUnique({
+    where: { email },
+    select: { id: true },
+  });
   return user?.id ?? null;
 }
 
@@ -66,17 +72,33 @@ export async function PUT(request: Request) {
     body = await request.json();
   } catch {
     return NextResponse.json(
-      { success: false, error: { code: "BAD_JSON", message: "잘못된 요청입니다." } },
+      {
+        success: false,
+        error: { code: "BAD_JSON", message: "잘못된 요청입니다." },
+      },
       { status: 400 },
     );
   }
 
-  const { documentId, anonId, title = "Untitled", rawText = "", diagram } = body;
+  const {
+    documentId,
+    anonId,
+    title = "Untitled",
+    rawText = "",
+    diagram,
+  } = body;
   if (!documentId || !UUID_RE.test(documentId)) {
     return NextResponse.json(
-      { success: false, error: { code: "BAD_ID", message: "documentId가 필요합니다." } },
+      {
+        success: false,
+        error: { code: "BAD_ID", message: "documentId가 필요합니다." },
+      },
       { status: 400 },
     );
+  }
+
+  if (!prisma) {
+    return NextResponse.json({ success: true, persisted: false });
   }
 
   try {
@@ -92,7 +114,10 @@ export async function PUT(request: Request) {
     });
     if (existing && existing.userId !== ownerId) {
       return NextResponse.json(
-        { success: false, error: { code: "FORBIDDEN", message: "권한이 없습니다." } },
+        {
+          success: false,
+          error: { code: "FORBIDDEN", message: "권한이 없습니다." },
+        },
         { status: 403 },
       );
     }
@@ -133,9 +158,16 @@ export async function GET(request: Request) {
 
   if (!documentId || !UUID_RE.test(documentId)) {
     return NextResponse.json(
-      { success: false, error: { code: "BAD_ID", message: "documentId가 필요합니다." } },
+      {
+        success: false,
+        error: { code: "BAD_ID", message: "documentId가 필요합니다." },
+      },
       { status: 400 },
     );
+  }
+
+  if (!prisma) {
+    return NextResponse.json({ success: true, found: false });
   }
 
   try {
