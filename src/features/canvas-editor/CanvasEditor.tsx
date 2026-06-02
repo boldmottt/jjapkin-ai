@@ -34,6 +34,8 @@ import {
   applyProps,
   flipElements,
   alignElements,
+  distributeElements,
+  createShadows,
   getSelected,
   type PropEl,
   type AlignMode,
@@ -121,6 +123,20 @@ export function CanvasEditor() {
     (mode: AlignMode) =>
       applyElements(
         alignElements(sceneElements as unknown as PropEl[], selectedIds, mode) as unknown as ExcalidrawElement[],
+      ),
+    [applyElements, sceneElements, selectedIds],
+  );
+  const handleDistribute = useCallback(
+    (axis: "horizontal" | "vertical") =>
+      applyElements(
+        distributeElements(sceneElements as unknown as PropEl[], selectedIds, axis) as unknown as ExcalidrawElement[],
+      ),
+    [applyElements, sceneElements, selectedIds],
+  );
+  const handleAddShadow = useCallback(
+    () =>
+      applyElements(
+        createShadows(sceneElements as unknown as PropEl[], selectedIds) as unknown as ExcalidrawElement[],
       ),
     [applyElements, sceneElements, selectedIds],
   );
@@ -276,6 +292,8 @@ export function CanvasEditor() {
                 onPatch={handlePatch}
                 onFlip={handleFlip}
                 onAlign={handleAlign}
+                onDistribute={handleDistribute}
+                onAddShadow={handleAddShadow}
                 onClose={() => setShowProps(false)}
               />
             )}

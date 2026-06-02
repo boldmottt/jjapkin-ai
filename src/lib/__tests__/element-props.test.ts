@@ -4,6 +4,8 @@ import {
   applyProps,
   flipElements,
   alignElements,
+  distributeElements,
+  createShadows,
   asHex,
   radToDeg,
   degToRad,
@@ -68,6 +70,51 @@ describe("flipElements", () => {
   it("선택 안 된 요소는 그대로", () => {
     const next = flipElements(els, new Set(["a"]), "horizontal");
     expect(next.find((e) => e.id === "b")!.x).toBe(200);
+  });
+});
+
+describe("distributeElements", () => {
+  it("3개를 균등 간격으로 분배 (첫·끝 고정)", () => {
+    const three: PropEl[] = [
+      { id: "a", x: 0, y: 0, width: 10, height: 10 },
+      { id: "b", x: 30, y: 0, width: 10, height: 10 },
+      { id: "c", x: 100, y: 0, width: 10, height: 10 },
+    ];
+    const ids = new Set(["a", "b", "c"]);
+    const next = distributeElements(three, ids, "horizontal");
+    // span=110, totalSize=30, gap=(110-30)/2=40 → a:0, b:50, c:100
+    expect(next.find((e) => e.id === "a")!.x).toBe(0);
+    expect(next.find((e) => e.id === "b")!.x).toBe(50);
+    expect(next.find((e) => e.id === "c")!.x).toBe(100);
+  });
+
+  it("3개 미만이면 변화 없음", () => {
+    const next = distributeElements(els, idsAB, "horizontal");
+    expect(next).toEqual(els);
+  });
+});
+
+describe("createShadows", () => {
+  it("선택 도형마다 그림자 복제본을 원본 앞에 삽입", () => {
+    const one: PropEl[] = [{ id: "r", type: "rectangle", x: 10, y: 20, width: 50, height: 50 }];
+    let n = 0;
+    const next = createShadows(one, new Set(["r"]), {
+      dx: 6,
+      dy: 6,
+      idGen: () => `s${n++}`,
+    });
+    expect(next).toHaveLength(2);
+    expect(next[0].id).toBe("s0"); // 그림자가 먼저(뒤 레이어)
+    expect(next[1].id).toBe("r");
+    expect(next[0].x).toBe(16);
+    expect(next[0].y).toBe(26);
+    expect(next[0].opacity).toBe(40);
+  });
+
+  it("텍스트 등 그림자 비대상은 복제 안 함", () => {
+    const t: PropEl[] = [{ id: "t", type: "text", x: 0, y: 0, width: 10, height: 10 }];
+    const next = createShadows(t, new Set(["t"]));
+    expect(next).toHaveLength(1);
   });
 });
 

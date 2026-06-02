@@ -8,7 +8,7 @@
  */
 
 import { useEffect, useRef, useState } from "react";
-import { FlipHorizontal, FlipVertical, X } from "lucide-react";
+import { FlipHorizontal, FlipVertical, Pipette, X } from "lucide-react";
 import {
   asHex,
   radToDeg,
@@ -22,26 +22,60 @@ interface PropertiesPanelProps {
   onPatch: (patch: Record<string, unknown>) => void;
   onFlip: (axis: "horizontal" | "vertical") => void;
   onAlign: (mode: AlignMode) => void;
+  onDistribute: (axis: "horizontal" | "vertical") => void;
+  onAddShadow: () => void;
   onClose: () => void;
 }
 
 const num = (v: unknown, d = 0): number =>
   typeof v === "number" && Number.isFinite(v) ? v : d;
 
+const ROUNDABLE = new Set(["rectangle", "diamond", "line"]);
+
+/** EyeDropper API로 화면에서 색을 추출 (미지원이면 null) */
+async function pickScreenColor(): Promise<string | null> {
+  const w = window as unknown as {
+    EyeDropper?: new () => { open: () => Promise<{ sRGBHex: string }> };
+  };
+  if (!w.EyeDropper) return null;
+  try {
+    const result = await new w.EyeDropper().open();
+    return result.sRGBHex;
+  } catch {
+    return null; // 사용자가 취소
+  }
+}
+
 export function PropertiesPanel({
   elements,
   onPatch,
   onFlip,
   onAlign,
+  onDistribute,
+  onAddShadow,
   onClose,
 }: PropertiesPanelProps) {
+  const [hasEyeDropper, setHasEyeDropper] = useState(false);
+  useEffect(() => {
+    setHasEyeDropper(typeof window !== "undefined" && "EyeDropper" in window);
+  }, []);
+
   const first = elements[0];
   if (!first) return null;
   const single = elements.length === 1;
   const multi = elements.length >= 2;
+  const canDistribute = elements.length >= 3;
 
   const bg = first.backgroundColor;
   const isTransparent = bg === "transparent" || bg == null;
+  const textEl = elements.find((e) => e.type === "text");
+  const isRoundable = ROUNDABLE.has(String(first.type));
+  const isRounded = first.roundness != null;
+
+  const eyedrop = async (key: "backgroundColor" | "strokeColor") => {
+    const c = await pickScreenColor();
+    if (c) onPatch({ [key]: c });
+  };
 
   return (
     <div className="absolute left-3 top-3 z-20 flex max-h-[calc(100%-1.5rem)] w-64 flex-col rounded-lg border bg-background/95 shadow-lg backdrop-blur">
@@ -69,6 +103,11 @@ export function PropertiesPanel({
               className="h-6 w-8 cursor-pointer rounded border bg-transparent p-0"
               aria-label="채움 색"
             />
+            {hasEyeDropper && (
+              <IconButton onClick={() => eyedrop("backgroundColor")} label="스포이드(채움)">
+                <Pipette className="h-3.5 w-3.5" />
+              </IconButton>
+            )}
             <button
               onClick={() =>
                 onPatch({
@@ -91,6 +130,11 @@ export function PropertiesPanel({
               className="h-6 w-8 cursor-pointer rounded border bg-transparent p-0"
               aria-label="획 색"
             />
+            {hasEyeDropper && (
+              <IconButton onClick={() => eyedrop("strokeColor")} label="스포이드(획)">
+                <Pipette className="h-3.5 w-3.5" />
+              </IconButton>
+            )}
           </Row>
         </Section>
 
@@ -191,14 +235,86 @@ export function PropertiesPanel({
             />
           </Row>
           <div className="flex gap-2">
-            <IconButton onClick={() => onFlip("horizontal")} label="가로 뒤집기">
+            <IconButton
+              onClick={() => onFlip("horizontal")}
+              label="가로 뒤집기"
+              className="flex-1"
+            >
               <FlipHorizontal className="h-4 w-4" />
             </IconButton>
-            <IconButton onClick={() => onFlip("vertical")} label="세로 뒤집기">
+            <IconButton
+              onClick={() => onFlip("vertical")}
+              label="세로 뒤집기"
+              className="flex-1"
+            >
               <FlipVertical className="h-4 w-4" />
             </IconButton>
           </div>
         </Section>
+
+        {/* 모서리 둥글기 */}
+        {isRoundable && (
+          <Section label="모서리">
+            <button
+              onClick={() =>
+                onPatch({ roundness: isRounded ? null : { type: 3 } })
+              }
+              className={
+                "w-full rounded border py-1.5 text-[11px] transition-colors hover:border-primary/50 " +
+                (isRounded ? "border-primary text-primary" : "")
+              }
+            >
+              {isRounded ? "둥근 모서리 ✓" : "둥근 모서리"}
+            </button>
+          </Section>
+        )}
+
+        {/* 텍스트 */}
+        {textEl && (
+          <Section label="텍스트">
+            <Row label="크기">
+              <NumberField
+                value={num(textEl.fontSize, 16)}
+                min={6}
+                onCommit={(v) => onPatch({ fontSize: v })}
+              />
+            </Row>
+            <Row label="글꼴">
+              <Select
+                value={String(textEl.fontFamily ?? 2)}
+                onChange={(v) => onPatch({ fontFamily: Number(v) })}
+                options={[
+                  ["1", "손글씨"],
+                  ["2", "일반"],
+                  ["3", "코드"],
+                ]}
+              />
+            </Row>
+            <Row label="정렬">
+              <Select
+                value={String(textEl.textAlign ?? "left")}
+                onChange={(v) => onPatch({ textAlign: v })}
+                options={[
+                  ["left", "좌"],
+                  ["center", "가운데"],
+                  ["right", "우"],
+                ]}
+              />
+            </Row>
+          </Section>
+        )}
+
+        {/* 효과 */}
+        {single && (
+          <Section label="효과">
+            <button
+              onClick={onAddShadow}
+              className="w-full rounded border py-1.5 text-[11px] transition-colors hover:border-primary/50"
+            >
+              그림자 추가
+            </button>
+          </Section>
+        )}
 
         {/* 정렬 (다중 선택) */}
         {multi && (
@@ -223,6 +339,22 @@ export function PropertiesPanel({
                 </button>
               ))}
             </div>
+            {canDistribute && (
+              <div className="grid grid-cols-2 gap-1 pt-1">
+                <button
+                  onClick={() => onDistribute("horizontal")}
+                  className="rounded border py-1 text-[11px] transition-colors hover:border-primary/50"
+                >
+                  가로 분배
+                </button>
+                <button
+                  onClick={() => onDistribute("vertical")}
+                  className="rounded border py-1 text-[11px] transition-colors hover:border-primary/50"
+                >
+                  세로 분배
+                </button>
+              </div>
+            )}
           </Section>
         )}
       </div>
@@ -332,17 +464,22 @@ function IconButton({
   onClick,
   label,
   children,
+  className = "",
 }: {
   onClick: () => void;
   label: string;
   children: React.ReactNode;
+  className?: string;
 }) {
   return (
     <button
       onClick={onClick}
       aria-label={label}
       title={label}
-      className="flex flex-1 items-center justify-center rounded border py-1.5 transition-colors hover:border-primary/50"
+      className={
+        "flex items-center justify-center rounded border p-1.5 transition-colors hover:border-primary/50 " +
+        className
+      }
     >
       {children}
     </button>
