@@ -13,6 +13,7 @@ interface EditorLayoutState {
 
   setTextPanelRatio: (ratio: number) => void;
   toggleCandidatePanel: () => void;
+  setShowCandidatePanel: (show: boolean) => void;
   setActiveDiagramType: (type: DiagramType | null) => void;
 }
 
@@ -24,6 +25,7 @@ export const useEditorLayoutStore = create<EditorLayoutState>((set) => ({
   setTextPanelRatio: (ratio) => set({ textPanelRatio: ratio }),
   toggleCandidatePanel: () =>
     set((s) => ({ showCandidatePanel: !s.showCandidatePanel })),
+  setShowCandidatePanel: (show) => set({ showCandidatePanel: show }),
   setActiveDiagramType: (type) => set({ activeDiagramType: type }),
 }));
 
@@ -52,7 +54,13 @@ export const useGenerationStore = create<GenerationState>((set) => ({
 
   setStatus: (status) => set({ status }),
   setCandidates: (candidates) =>
-    set({ candidates, status: "success", error: null }),
+    set({
+      candidates,
+      // 추천(첫 번째) 후보를 자동 선택해 생성 직후 캔버스가 비지 않도록 함
+      selectedCandidateId: candidates[0]?.id ?? null,
+      status: "success",
+      error: null,
+    }),
   selectCandidate: (id) => set({ selectedCandidateId: id }),
   setError: (error) => set({ error, status: "error" }),
   reset: () =>

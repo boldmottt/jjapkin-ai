@@ -9,7 +9,8 @@ import type { DiagramType } from "@/types";
 export function TextEditor() {
   const { rawText, setRawText, title, setTitle } = useDocumentStore();
   const { setStatus, setCandidates, setError } = useGenerationStore();
-  const { setActiveDiagramType, toggleCandidatePanel } = useEditorLayoutStore();
+  const { activeDiagramType, setActiveDiagramType, setShowCandidatePanel } =
+    useEditorLayoutStore();
 
   const handleGenerate = useCallback(async () => {
     if (!rawText.trim()) return;
@@ -20,18 +21,31 @@ export function TextEditor() {
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: rawText }),
+        // 사용자가 유형을 직접 골랐다면 전달, "AI 추천"(null)이면 생략
+        body: JSON.stringify({
+          text: rawText,
+          ...(activeDiagramType ? { diagramType: activeDiagramType } : {}),
+        }),
       });
       const json = await res.json();
       if (!json.success) throw new Error(json.error?.message ?? "생성 실패");
 
       setCandidates(json.data.candidates);
       setActiveDiagramType(json.data.recommendedType);
-      toggleCandidatePanel();
+      setShowCandidatePanel(true);
     } catch (err) {
+      // setError가 status를 "error"로 전환함
       setError(err instanceof Error ? err.message : "알 수 없는 오류");
     }
-  }, [rawText, setCandidates, setError, setStatus, setActiveDiagramType, toggleCandidatePanel]);
+  }, [
+    rawText,
+    activeDiagramType,
+    setCandidates,
+    setError,
+    setStatus,
+    setActiveDiagramType,
+    setShowCandidatePanel,
+  ]);
 
   // ⌨️ Ctrl+Enter → 생성
   useEffect(() => {
@@ -64,7 +78,7 @@ export function TextEditor() {
       />
 
       {/* 다이어그램 유형 선택기 */}
-      <TypeSelector selected={null} onSelect={handleTypeSelect} />
+      <TypeSelector selected={activeDiagramType} onSelect={handleTypeSelect} />
 
       {/* Mermaid 미리보기 */}
       <MermaidPreview visible={rawText.trim().length > 0} />
