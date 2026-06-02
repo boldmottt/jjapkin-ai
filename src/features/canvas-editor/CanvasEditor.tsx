@@ -19,8 +19,10 @@ import type { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types";
 import { toast } from "@/stores/toast";
 import { DIAGRAM_TYPE_LABELS } from "@/types";
 import type { DiagramType } from "@/types";
-import { Layers as LayersIcon } from "lucide-react";
+import { Layers as LayersIcon, SlidersHorizontal } from "lucide-react";
 import { LayersPanel } from "./LayersPanel";
+import { PropertiesPanel } from "./PropertiesPanel";
+import type { SceneChangeMeta } from "./ExcalidrawWrapper";
 import {
   buildLayers,
   setLayerHidden,
@@ -28,6 +30,14 @@ import {
   reorderLayer,
   type LayerItem,
 } from "@/lib/layers";
+import {
+  applyProps,
+  flipElements,
+  alignElements,
+  getSelected,
+  type PropEl,
+  type AlignMode,
+} from "@/lib/element-props";
 
 export function CanvasEditor() {
   const { status, selectedCandidateId, candidates, saveScene } =
@@ -35,7 +45,9 @@ export function CanvasEditor() {
   const { activeDiagramType } = useEditorLayoutStore();
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [showLayers, setShowLayers] = useState(false);
+  const [showProps, setShowProps] = useState(true);
   const [sceneElements, setSceneElements] = useState<readonly ExcalidrawElement[]>([]);
+  const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(new Set());
   const apiRef = useRef<ExcalidrawImperativeAPI | null>(null);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -57,10 +69,12 @@ export function CanvasEditor() {
     }
   }, [selectedCandidate]);
 
-  // 편집 내용을 디바운스 저장 (후보 전환 후 돌아와도 유지) + 레이어 패널용 장면 추적
+  // 편집 내용을 디바운스 저장 + 레이어/속성 패널용 장면·선택 추적
   const handleSceneChange = useCallback(
-    (elements: readonly ExcalidrawElement[]) => {
+    (elements: readonly ExcalidrawElement[], appState: SceneChangeMeta) => {
       setSceneElements(elements);
+      const sel = appState.selectedElementIds ?? {};
+      setSelectedIds(new Set(Object.keys(sel).filter((id) => sel[id])));
       if (!selectedCandidateId) return;
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
       saveTimerRef.current = setTimeout(() => {
@@ -73,15 +87,43 @@ export function CanvasEditor() {
   // 후보가 바뀌면 패널/장면 상태 초기화
   useEffect(() => {
     setSceneElements([]);
+    setSelectedIds(new Set());
     setShowLayers(false);
   }, [selectedCandidateId]);
-
-  const layerItems = useMemo(() => buildLayers(sceneElements), [sceneElements]);
 
   const applyElements = useCallback((next: readonly ExcalidrawElement[]) => {
     apiRef.current?.updateScene({ elements: next as never });
     setSceneElements(next);
   }, []);
+
+  const layerItems = useMemo(() => buildLayers(sceneElements), [sceneElements]);
+
+  const selectedElements = useMemo(
+    () => getSelected(sceneElements as unknown as PropEl[], selectedIds),
+    [sceneElements, selectedIds],
+  );
+
+  const handlePatch = useCallback(
+    (patch: Record<string, unknown>) =>
+      applyElements(
+        applyProps(sceneElements as unknown as PropEl[], selectedIds, patch) as unknown as ExcalidrawElement[],
+      ),
+    [applyElements, sceneElements, selectedIds],
+  );
+  const handleFlip = useCallback(
+    (axis: "horizontal" | "vertical") =>
+      applyElements(
+        flipElements(sceneElements as unknown as PropEl[], selectedIds, axis) as unknown as ExcalidrawElement[],
+      ),
+    [applyElements, sceneElements, selectedIds],
+  );
+  const handleAlign = useCallback(
+    (mode: AlignMode) =>
+      applyElements(
+        alignElements(sceneElements as unknown as PropEl[], selectedIds, mode) as unknown as ExcalidrawElement[],
+      ),
+    [applyElements, sceneElements, selectedIds],
+  );
 
   const handleToggleVisibility = useCallback(
     (item: LayerItem) => applyElements(setLayerHidden(sceneElements, item, !item.hidden)),
@@ -158,6 +200,20 @@ export function CanvasEditor() {
         </span>
         <div className="flex-1" />
         <button
+          onClick={() => setShowProps((v) => !v)}
+          disabled={!showExcalidraw}
+          className={
+            "inline-flex items-center gap-1 rounded px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-30 " +
+            (showProps
+              ? "bg-primary/10 text-primary"
+              : "border hover:border-primary/50")
+          }
+          aria-pressed={showProps}
+        >
+          <SlidersHorizontal className="h-3.5 w-3.5" />
+          속성
+        </button>
+        <button
           onClick={() => setShowLayers((v) => !v)}
           disabled={!showExcalidraw}
           className={
@@ -212,6 +268,15 @@ export function CanvasEditor() {
                 onToggleLock={handleToggleLock}
                 onReorder={handleReorder}
                 onSelect={handleSelectLayer}
+              />
+            )}
+            {showProps && selectedElements.length > 0 && (
+              <PropertiesPanel
+                elements={selectedElements}
+                onPatch={handlePatch}
+                onFlip={handleFlip}
+                onAlign={handleAlign}
+                onClose={() => setShowProps(false)}
               />
             )}
           </>

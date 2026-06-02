@@ -35,11 +35,19 @@ export type ExcalidrawElement = Record<string, unknown> & {
   height: number;
 };
 
+/** onChange가 함께 전달하는 최소 앱 상태 (선택 등) */
+export interface SceneChangeMeta {
+  selectedElementIds?: Record<string, boolean>;
+}
+
 interface ExcalidrawWrapperProps {
   /** 초기 요소 (IR → Excalidraw 변환 결과) */
   initialElements?: ExcalidrawElement[];
-  /** 편집 상태 변경 콜백 */
-  onChange?: (elements: readonly ExcalidrawElement[]) => void;
+  /** 편집 상태 변경 콜백 (요소 + 선택 등 앱 상태) */
+  onChange?: (
+    elements: readonly ExcalidrawElement[],
+    appState: SceneChangeMeta,
+  ) => void;
   /** imperative API 준비 콜백 (export/persist에 사용) */
   onApiReady?: (api: ExcalidrawImperativeAPI) => void;
   /** 테마 (light/dark) */
@@ -56,8 +64,8 @@ export function ExcalidrawWrapper({
   readOnly = false,
 }: ExcalidrawWrapperProps) {
   const handleChange = useCallback(
-    (elements: readonly ExcalidrawElement[]) => {
-      onChange?.(elements);
+    (elements: readonly ExcalidrawElement[], appState: SceneChangeMeta) => {
+      onChange?.(elements, appState);
     },
     [onChange],
   );
