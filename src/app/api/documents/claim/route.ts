@@ -64,13 +64,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true, claimed: 0 });
     }
 
-    const result = await prisma.document.updateMany({
-      where: { userId: anon.id },
-      data: { userId: user.id },
-    });
-
-    // 비어버린 익명 User 정리 (실패해도 무시)
-    await prisma.user.delete({ where: { id: anon.id } }).catch(() => {});
+    // 소유권 이전 + 익명 User 삭제를 트랜잭션으로 묶어 원자성 보장
+    // onDelete: Cascade 이므로 updateMany와 delete를 분리하면
+    // 중간 상태에서 문서가 cascade로 유실될 위험이 있음
+    const [result] = await prisma.$transaction([
+      prisma.document.updateMany({
+        where: { userId: anon.id },
+        data: { userId: user.id },
+      }),
+      prisma.user.delete({ where: { id: anon.id } }),
+    ]);
 
     return NextResponse.json({ success: true, claimed: result.count });
   } catch (error) {
