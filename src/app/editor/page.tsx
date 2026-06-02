@@ -6,6 +6,7 @@ import { useEditorLayoutStore, useGenerationStore } from "@/stores";
 import { TextEditor } from "@/features/text-editor/TextEditor";
 import { CanvasEditor } from "@/features/canvas-editor/CanvasEditor";
 import { CandidatePanel } from "@/features/diagram-generator/CandidatePanel";
+import { useDocumentPersistence } from "@/hooks/useDocumentPersistence";
 import { useTheme } from "next-themes";
 import { Moon, Sun, ArrowLeft } from "lucide-react";
 
@@ -13,6 +14,9 @@ export default function EditorPage() {
   const { showCandidatePanel } = useEditorLayoutStore();
   const { candidates, selectedCandidateId } = useGenerationStore();
   const { theme, setTheme } = useTheme();
+
+  // 문서 자동 저장 + 새로고침 복원
+  useDocumentPersistence();
   const [splitPercent, setSplitPercent] = useState(40);
   const isDragging = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);

@@ -49,6 +49,11 @@ interface GenerationState {
   setCandidates: (candidates: GenerationCandidate[]) => void;
   selectCandidate: (id: string) => void;
   saveScene: (candidateId: string, elements: readonly unknown[]) => void;
+  /** 영속화된 문서에서 단일 다이어그램을 복원 */
+  hydratePersisted: (
+    candidate: GenerationCandidate,
+    elements: readonly unknown[],
+  ) => void;
   setError: (error: string | null) => void;
   reset: () => void;
 }
@@ -76,6 +81,14 @@ export const useGenerationStore = create<GenerationState>((set) => ({
     set((s) => ({
       editedScenes: { ...s.editedScenes, [candidateId]: elements },
     })),
+  hydratePersisted: (candidate, elements) =>
+    set({
+      candidates: [candidate],
+      selectedCandidateId: candidate.id,
+      editedScenes: elements.length > 0 ? { [candidate.id]: elements } : {},
+      status: "success",
+      error: null,
+    }),
   setError: (error) => set({ error, status: "error" }),
   reset: () =>
     set({
@@ -98,6 +111,8 @@ interface DocumentState {
   setTitle: (title: string) => void;
   setRawText: (text: string) => void;
   markSaved: () => void;
+  /** 영속화된 문서로 복원 (dirty 표시하지 않음) */
+  hydrate: (title: string, rawText: string) => void;
 }
 
 export const useDocumentStore = create<DocumentState>((set) => ({
@@ -109,6 +124,7 @@ export const useDocumentStore = create<DocumentState>((set) => ({
   setTitle: (title) => set({ title, isDirty: true }),
   setRawText: (text) => set({ rawText: text, isDirty: true }),
   markSaved: () => set({ isDirty: false, lastSavedAt: new Date().toISOString() }),
+  hydrate: (title, rawText) => set({ title, rawText, isDirty: false }),
 }));
 
 // ── AI 파이프라인 상태 ──────────────────────────────
