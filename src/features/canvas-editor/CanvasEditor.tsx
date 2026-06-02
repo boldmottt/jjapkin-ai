@@ -13,18 +13,29 @@ import {
   exportToIllustratorPdf,
   exportToEps,
 } from "../export-pipeline";
-import { useMemo, useRef, useState, useCallback } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import type { ExportFormat } from "@/components/editor/ExportModal";
 import type { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types";
 import { toast } from "@/stores/toast";
 import { DIAGRAM_TYPE_LABELS } from "@/types";
 import type { DiagramType } from "@/types";
+import { Layers as LayersIcon } from "lucide-react";
+import { LayersPanel } from "./LayersPanel";
+import {
+  buildLayers,
+  setLayerHidden,
+  setLayerLocked,
+  reorderLayer,
+  type LayerItem,
+} from "@/lib/layers";
 
 export function CanvasEditor() {
   const { status, selectedCandidateId, candidates, saveScene } =
     useGenerationStore();
   const { activeDiagramType } = useEditorLayoutStore();
   const [exportModalOpen, setExportModalOpen] = useState(false);
+  const [showLayers, setShowLayers] = useState(false);
+  const [sceneElements, setSceneElements] = useState<readonly ExcalidrawElement[]>([]);
   const apiRef = useRef<ExcalidrawImperativeAPI | null>(null);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -46,9 +57,10 @@ export function CanvasEditor() {
     }
   }, [selectedCandidate]);
 
-  // 편집 내용을 디바운스 저장 (후보 전환 후 돌아와도 유지)
+  // 편집 내용을 디바운스 저장 (후보 전환 후 돌아와도 유지) + 레이어 패널용 장면 추적
   const handleSceneChange = useCallback(
     (elements: readonly ExcalidrawElement[]) => {
+      setSceneElements(elements);
       if (!selectedCandidateId) return;
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
       saveTimerRef.current = setTimeout(() => {
@@ -57,6 +69,39 @@ export function CanvasEditor() {
     },
     [selectedCandidateId, saveScene],
   );
+
+  // 후보가 바뀌면 패널/장면 상태 초기화
+  useEffect(() => {
+    setSceneElements([]);
+    setShowLayers(false);
+  }, [selectedCandidateId]);
+
+  const layerItems = useMemo(() => buildLayers(sceneElements), [sceneElements]);
+
+  const applyElements = useCallback((next: readonly ExcalidrawElement[]) => {
+    apiRef.current?.updateScene({ elements: next as never });
+    setSceneElements(next);
+  }, []);
+
+  const handleToggleVisibility = useCallback(
+    (item: LayerItem) => applyElements(setLayerHidden(sceneElements, item, !item.hidden)),
+    [applyElements, sceneElements],
+  );
+  const handleToggleLock = useCallback(
+    (item: LayerItem) => applyElements(setLayerLocked(sceneElements, item, !item.locked)),
+    [applyElements, sceneElements],
+  );
+  const handleReorder = useCallback(
+    (key: string, direction: "up" | "down") =>
+      applyElements(reorderLayer(sceneElements, layerItems, key, direction)),
+    [applyElements, sceneElements, layerItems],
+  );
+  const handleSelectLayer = useCallback((item: LayerItem) => {
+    const selectedElementIds = Object.fromEntries(
+      item.elementIds.map((id) => [id, true]),
+    );
+    apiRef.current?.updateScene({ appState: { selectedElementIds } as never });
+  }, []);
 
   const showExcalidraw =
     selectedCandidateId && status === "success" && excalidrawElements.length > 0;
@@ -113,6 +158,20 @@ export function CanvasEditor() {
         </span>
         <div className="flex-1" />
         <button
+          onClick={() => setShowLayers((v) => !v)}
+          disabled={!showExcalidraw}
+          className={
+            "inline-flex items-center gap-1 rounded px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-30 " +
+            (showLayers
+              ? "bg-primary/10 text-primary"
+              : "border hover:border-primary/50")
+          }
+          aria-pressed={showLayers}
+        >
+          <LayersIcon className="h-3.5 w-3.5" />
+          레이어
+        </button>
+        <button
           onClick={() => setExportModalOpen(true)}
           disabled={!showExcalidraw}
           className="rounded px-3 py-1.5 bg-primary text-primary-foreground text-xs font-medium transition-colors hover:opacity-90 disabled:opacity-30"
@@ -122,7 +181,7 @@ export function CanvasEditor() {
       </div>
 
       {/* Canvas Area */}
-      <div className="flex-1">
+      <div className="relative flex-1">
         {status === "loading" ? (
           <div className="flex h-full items-center justify-center bg-muted/30">
             <div className="flex items-center gap-3 text-muted-foreground">
@@ -131,16 +190,31 @@ export function CanvasEditor() {
             </div>
           </div>
         ) : showExcalidraw ? (
-          <ExcalidrawWrapper
-            // 후보가 바뀌면 remount하여 해당 후보의 (편집된) 장면을 로드
-            key={selectedCandidateId}
-            initialElements={excalidrawElements}
-            onApiReady={(api) => {
-              apiRef.current = api;
-            }}
-            onChange={handleSceneChange}
-            theme="light"
-          />
+          <>
+            <ExcalidrawWrapper
+              // 후보가 바뀌면 remount하여 해당 후보의 (편집된) 장면을 로드
+              key={selectedCandidateId}
+              initialElements={excalidrawElements}
+              onApiReady={(api) => {
+                apiRef.current = api;
+                setSceneElements(
+                  api.getSceneElements() as unknown as readonly ExcalidrawElement[],
+                );
+              }}
+              onChange={handleSceneChange}
+              theme="light"
+            />
+            {showLayers && (
+              <LayersPanel
+                items={layerItems}
+                onClose={() => setShowLayers(false)}
+                onToggleVisibility={handleToggleVisibility}
+                onToggleLock={handleToggleLock}
+                onReorder={handleReorder}
+                onSelect={handleSelectLayer}
+              />
+            )}
+          </>
         ) : status === "error" ? (
           <div className="flex h-full items-center justify-center bg-muted/30">
             <div className="text-center text-destructive">
