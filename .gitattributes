@@ -1,0 +1,10 @@
+# 런처 스크립트 줄바꿈 고정 (OS별 깨짐 방지)
+*.bat      text eol=crlf
+*.command  text eol=lf
+*.sh       text eol=lf
+
+# 폰트 바이너리 (줄바꿈 정규화 금지)
+*.ttf      binary
+*.otf      binary
+*.woff     binary
+*.woff2    binary

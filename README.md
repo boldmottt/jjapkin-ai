@@ -2,6 +2,11 @@
 
 > 텍스트를 붙여넣으면 AI가 자동으로 다이어그램, 플로우차트, 인포그래픽으로 변환해주는 비즈니스 시각화 도구
 
+**13종 다이어그램** · **자동 레이아웃(dagre)** · **AI 아이콘 자동 매핑** ·
+**✦ AI 선택 수정**(오브젝트 선택→자연어 지시) · **이미지→다이어그램(비전)** ·
+**테마 프리셋 5종** · **원클릭 정리(Beautify)** · **대비 자동 보정** ·
+**엣지 라벨/강조** · **커맨드 팔레트(⌘K)** · **문단별 생성** · **벡터 PDF(한글 임베딩)**
+
 ## 기술 스택
 
 - **Framework:** Next.js 14 (App Router)
@@ -9,11 +14,27 @@
 - **Styling:** Tailwind CSS + shadcn/ui
 - **Editor:** Excalidraw (@excalidraw/excalidraw)
 - **State:** Zustand + React Query
-- **AI:** OpenAI GPT-4o-mini (→ Anthropic Claude fallback)
+- **AI:** DeepSeek (deepseek-chat) → OpenAI GPT-4o-mini → Anthropic Claude fallback
 - **DB:** PostgreSQL + Prisma (Supabase)
+- **Auth:** Supabase Auth (이메일 매직링크, 선택 — 미설정 시 익명 모드)
 - **Deploy:** Vercel
 
 ## 시작하기
+
+### 🖱️ 원클릭 실행 (가장 쉬움)
+
+- **Windows:** `start.bat` 더블클릭
+- **macOS:** `start.command` 더블클릭 (최초엔 우클릭 → "열기")
+- **Linux:** 터미널에서 `./start.command` 실행
+
+자동으로 의존성을 설치하고 서버를 켠 뒤 브라우저(`http://localhost:3000`)를 엽니다.
+(Node.js 18+ 필요. AI 생성 기능은 `.env.local`에 `DEEPSEEK_API_KEY` 설정 시 동작)
+
+> **로컬 모드**: 로그인이나 DB(Supabase) 없이도 바로 사용할 수 있습니다.
+> 작성한 텍스트와 편집한 다이어그램은 브라우저(localStorage)에 자동 저장되어
+> 새로고침/재방문에도 유지됩니다. 로그인/DB를 설정하면 서버와 동기화됩니다.
+
+### 수동 실행
 
 ```bash
 # 1. 의존성 설치
@@ -21,7 +42,7 @@ npm install
 
 # 2. 환경변수 설정
 cp .env.template .env.local
-# → .env.local 파일을 편집하여 OPENAI_API_KEY 추가
+# → .env.local 파일을 편집하여 DEEPSEEK_API_KEY 추가 (OPENAI_API_KEY·ANTHROPIC_API_KEY는 폴백용 옵션)
 
 # 3. DB 초기화 (선택)
 npx prisma db push
@@ -60,7 +81,7 @@ src/
 │   └── export-pipeline/    # 내보내기
 ├── stores/                 # Zustand 상태 관리
 ├── lib/                    # 공통 라이브러리
-│   ├── ai/                 # OpenAIClient, Prompt, Parser, Cache
+│   ├── ai/                 # AI 클라이언트(DeepSeek/OpenAI/Claude), Prompt, Parser, Cache
 │   ├── db/                 # Prisma 클라이언트
 │   └── utils/              # cn() 유틸리티
 └── types/                  # 타입 정의
@@ -70,7 +91,7 @@ src/
 
 | 스프린트 | 기능 | 상태 |
 |:---:|------|:---:|
-| 1 | AI 파이프라인 (OpenAI/Claude, 프롬프트, 파서, 캐싱) | ✅ |
+| 1 | AI 파이프라인 (DeepSeek/OpenAI/Claude, 프롬프트, 파서, 캐싱) | ✅ |
 | 2 | Excalidraw 연동 (IR→Elements, 5종 레이아웃, 편집기) | ✅ |
 | 3 | 다이어그램 유형 선택기 + 편집 기능 | ✅ |
 | 4 | 내보내기 (PNG/SVG/PPT/PDF) | ✅ |

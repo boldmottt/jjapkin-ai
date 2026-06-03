@@ -18,11 +18,25 @@ import { chatCompletionWithFallback } from "@/lib/ai/openai";
 import { buildMessages } from "@/lib/ai/prompts";
 import { parseAIResponse, buildGenerationResponse, inferDiagramType } from "@/lib/ai/parser";
 import { getCachedResult, setCachedResult } from "@/lib/ai/cache";
+import { logApiUsage } from "@/lib/ai/usage-log";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
   const startTime = Date.now();
 
   try {
+    // 레이트리밋 (IP 기반, best-effort)
+    const ip = getClientIp(request);
+    const limit = checkRateLimit(`generate:${ip}`);
+    if (!limit.ok) {
+      return errorResponse(
+        429,
+        "RATE_LIMIT",
+        "요청이 너무 많습니다. 잠시 후 다시 시도해주세요.",
+        { "Retry-After": String(limit.retryAfter) },
+      );
+    }
+
     const body: GenerationRequest = await request.json();
 
     const validationError = validateRequest(body);
@@ -72,6 +86,15 @@ export async function POST(request: Request) {
       tokensUsed: result.tokensInput + result.tokensOutput,
     });
 
+    // 사용량/비용 기록 (실패해도 요청 흐름 막지 않음)
+    await logApiUsage({
+      model: result.model,
+      tokensInput: result.tokensInput,
+      tokensOutput: result.tokensOutput,
+      diagramType,
+      success: true,
+    });
+
     const duration = Date.now() - startTime;
     console.info(
       `[generate] OK — model=${result.model}, ${candidates.length} candidates, ${duration}ms`,
@@ -84,17 +107,18 @@ export async function POST(request: Request) {
       }),
     );
   } catch (error) {
+    // 상세 원인은 서버 로그에만 남기고, 클라이언트에는 일반 메시지만 전달
     const message = (error as Error).message;
     console.error(`[generate] FAIL (${Date.now() - startTime}ms):`, message);
 
     if (message.includes("401") || message.includes("Incorrect API key")) {
-      return errorResponse(401, "AUTH_ERROR", "API 키가 올바르지 않습니다.");
+      return errorResponse(500, "SERVICE_UNAVAILABLE", "일시적으로 생성 서비스를 사용할 수 없습니다.");
     }
     if (message.includes("429") || message.includes("rate limit")) {
       return errorResponse(429, "RATE_LIMIT", "요청이 너무 많습니다. 잠시 후 다시 시도해주세요.");
     }
 
-    return errorResponse(500, "GENERATION_FAILED", message);
+    return errorResponse(500, "GENERATION_FAILED", "다이어그램 생성에 실패했습니다. 잠시 후 다시 시도해주세요.");
   }
 }
 
@@ -113,15 +137,21 @@ function validateRequest(body: GenerationRequest): { code: string; message: stri
 }
 
 function successResponse(data: GenerationResponse) {
+  // POST 응답은 브라우저/프록시가 캐싱하지 않으므로 캐시 헤더를 두지 않는다.
+  // (중복 생성 방지는 서버측 DB 캐시가 담당)
   return NextResponse.json(
     { success: true, data } satisfies ApiResponse<GenerationResponse>,
-    { headers: { "Cache-Control": "private, max-age=3600" } },
   );
 }
 
-function errorResponse(status: number, code: string, message: string) {
+function errorResponse(
+  status: number,
+  code: string,
+  message: string,
+  headers?: Record<string, string>,
+) {
   return NextResponse.json(
     { success: false, error: { code, message } } satisfies ApiResponse<never>,
-    { status },
+    { status, ...(headers ? { headers } : {}) },
   );
 }

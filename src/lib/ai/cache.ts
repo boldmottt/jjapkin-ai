@@ -2,7 +2,7 @@
  * AI 생성 결과 캐싱 레이어
  *
  * 동일한 텍스트 + 다이어그램 유형 조합에 대해
- * OpenAI API 중복 호출을 방지합니다.
+ * AI API(DeepSeek → OpenAI → Claude) 중복 호출을 방지합니다.
  *
  * 캐싱 전략:
  *   - SHA256(text + diagramType) 해시로 Prisma GenerationCache 조회

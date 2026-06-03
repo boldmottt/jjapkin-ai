@@ -15,6 +15,8 @@
 
 import dynamic from "next/dynamic";
 import { useCallback } from "react";
+import type { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types";
+import type { SceneElement } from "@/lib/scene/types";
 
 // Excalidraw는 CSR 전용 (window 객체 의존)
 const ExcalidrawLazy = dynamic(
@@ -23,22 +25,26 @@ const ExcalidrawLazy = dynamic(
   { ssr: false },
 );
 
-// Excalidraw Element 최소 인터페이스
-// 실제 타입과 충돌하지 않도록 index signature 포함
-export type ExcalidrawElement = Record<string, unknown> & {
-  id: string;
-  type: string;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-};
+// Excalidraw Element 타입 = 정규 SceneElement (별칭, 하위호환)
+export type ExcalidrawElement = SceneElement;
+
+/** onChange가 함께 전달하는 최소 앱 상태 (선택 등) */
+export interface SceneChangeMeta {
+  selectedElementIds?: Record<string, boolean>;
+}
 
 interface ExcalidrawWrapperProps {
   /** 초기 요소 (IR → Excalidraw 변환 결과) */
   initialElements?: ExcalidrawElement[];
-  /** 편집 상태 변경 콜백 */
-  onChange?: (elements: readonly ExcalidrawElement[]) => void;
+  /** 초기 파일(아이콘 등 image 요소의 dataURL 맵) */
+  initialFiles?: Record<string, unknown>;
+  /** 편집 상태 변경 콜백 (요소 + 선택 등 앱 상태) */
+  onChange?: (
+    elements: readonly ExcalidrawElement[],
+    appState: SceneChangeMeta,
+  ) => void;
+  /** imperative API 준비 콜백 (export/persist에 사용) */
+  onApiReady?: (api: ExcalidrawImperativeAPI) => void;
   /** 테마 (light/dark) */
   theme?: "light" | "dark";
   /** readonly 모드 (조감도) */
@@ -47,13 +53,15 @@ interface ExcalidrawWrapperProps {
 
 export function ExcalidrawWrapper({
   initialElements,
+  initialFiles,
   onChange,
+  onApiReady,
   theme = "light",
   readOnly = false,
 }: ExcalidrawWrapperProps) {
   const handleChange = useCallback(
-    (elements: readonly ExcalidrawElement[]) => {
-      onChange?.(elements);
+    (elements: readonly ExcalidrawElement[], appState: SceneChangeMeta) => {
+      onChange?.(elements, appState);
     },
     [onChange],
   );
@@ -63,11 +71,13 @@ export function ExcalidrawWrapper({
       <ExcalidrawLazy
         initialData={{
           elements: (initialElements ?? []) as never[],
+          files: (initialFiles ?? {}) as never,
           appState: {
             viewBackgroundColor: theme === "dark" ? "#1e1e2e" : "#ffffff",
             theme,
           },
         }}
+        excalidrawAPI={onApiReady}
         onChange={handleChange as never}
         viewModeEnabled={readOnly}
         zenModeEnabled={false}

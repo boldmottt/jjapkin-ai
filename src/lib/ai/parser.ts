@@ -1,7 +1,7 @@
 /**
  * AI 응답 파서
  *
- * OpenAI가 반환한 JSON을 DiagramIR, GenerationCandidate 로 변환
+ * AI(DeepSeek → OpenAI → Claude)가 반환한 JSON을 DiagramIR, GenerationCandidate 로 변환
  * Zod 스키마로 유효성 검사 + 기본값 보정
  */
 
@@ -16,6 +16,14 @@ const nodeSchema = z.object({
   label: z.string().min(1, "Node label is required").max(100),
   type: z.enum(["start", "process", "decision", "end"]).optional(),
   color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Invalid hex color").optional(),
+  value: z.number().finite().optional(), // bar-chart/funnel 수치
+  group: z.string().max(50).optional(), // swimlane 레인
+  icon: z
+    .string()
+    .regex(/^([a-z0-9-]+:)?[a-z0-9-]+$/, "Invalid icon id")
+    .max(60)
+    .optional(), // lucide 아이콘 id
+  emphasis: z.enum(["none", "highlight", "badge"]).optional(),
 });
 
 const edgeSchema = z.object({
@@ -42,7 +50,7 @@ const aiResponseSchema = z.object({
 // ── 파서 함수 ──────────────────────────────────────
 
 /**
- * OpenAI JSON 응답을 GenerationCandidate[] 로 변환
+ * AI JSON 응답을 GenerationCandidate[] 로 변환
  * 유효성 검사 실패 시 상세 오류 반환
  */
 export function parseAIResponse(rawJson: unknown): GenerationCandidate[] {
@@ -64,11 +72,14 @@ export function parseAIResponse(rawJson: unknown): GenerationCandidate[] {
       diagramType: c.diagramType,
       title: c.title,
       description: c.description,
-      nodes: c.nodes.map((n) => ({
-        ...n,
-        type: n.type ?? "process", // 기본값
-        color: n.color ?? DEFAULT_NODE_COLORS[n.type ?? "process"],
-      })),
+      nodes: c.nodes.map((n) => {
+        const type = n.type ?? "process"; // 기본값 보정
+        return {
+          ...n,
+          type,
+          color: n.color ?? DEFAULT_NODE_COLORS[type],
+        };
+      }),
       edges: c.edges.map((e) => ({
         ...e,
         label: e.label ?? undefined, // 빈 문자열 → undefined
@@ -135,6 +146,14 @@ export function inferDiagramType(text: string): DiagramType {
   // 4. 비교: A vs B
   if (/(compare|비교|\bvs\b|대비|difference|차이점|장단점|장점\s*단점)/.test(lower)) {
     return "comparison";
+  }
+  // 5. 타임라인: 연대/시간순 (연도·날짜·역사)
+  if (
+    /(timeline|연대|연혁|타임라인|history of|\b\d{4}년\b|\b(19|20)\d{2}\b.*\b(19|20)\d{2}\b|시간\s*순|연도별)/.test(
+      lower,
+    )
+  ) {
+    return "timeline";
   }
 
   return "flowchart"; // 기본값

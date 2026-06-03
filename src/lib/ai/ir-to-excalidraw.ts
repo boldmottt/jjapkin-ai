@@ -1,324 +1,205 @@
 /**
- * IR → Excalidraw 변환기
+ * IR → Excalidraw 변환기 (어댑터)
  *
- * DiagramIR의 노드/엣지 구조를 Excalidraw Elements 배열로 변환합니다.
- * 자동 레이아웃을 포함한 완전한 변환 파이프라인.
+ * DiagramIR의 노드/엣지를 Excalidraw Elements 배열로 변환한다.
+ * 노드 배치(레이아웃)는 타입별 엔진(lib/layout)이 담당하고, 이 파일은
+ * "레이아웃 호출 + Excalidraw 요소 생성"만 맡는 얇은 어댑터다.
  */
 
-import type { DiagramIR, DiagramType } from "@/types";
-import { DEFAULT_NODE_COLORS } from "./parser";
+import type { DiagramIR } from "@/types";
+import type { SceneElement } from "@/lib/scene/types";
+import { getLayout } from "@/lib/layout/registry";
+import { getDecorations } from "@/lib/layout/decorations";
+import type { NodePosition } from "@/lib/layout/types";
+import { NODE_W, NODE_H } from "@/lib/layout/constants";
+import { iconToDataUrl } from "@/lib/icons/render";
+import { idealTextColor } from "@/lib/scene/color";
 
-// ── Excalidraw Element 타입 (경량화) ───────────────
+// ── Excalidraw Element 타입 (단일 SceneElement 사용) ─
+// 과거의 로컬 ExElement 인터페이스는 SceneElement로 통합됨.
+type ExElement = SceneElement;
 
-interface ExElement {
-  type: string;          // "rectangle" | "text" | "arrow"
-  id: string;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  // 텍스트 요소
-  text?: string;
-  fontSize?: number;
-  fontFamily?: number;   // Excalidraw 폰트 ID (1=hand-drawn, 2=normal, 3=code)
-  // 도형 공통
-  backgroundColor?: string;
-  strokeColor?: string;
-  strokeWidth?: number;
-  roughness?: number;     // 0=직선, 1=손그림, 2=중간
-  // 화살표
-  startBinding?: { elementId: string; focus: number; gap: number };
-  endBinding?: { elementId: string; focus: number; gap: number };
-  points?: [number, number][];
-  // 그룹
-  groupIds?: string[];
-  boundElements?: { id: string; type: string }[] | null;
-}
-
-// ── 상수 ────────────────────────────────────────────
-
-const NODE_W = 160;
-const NODE_H = 60;
-const H_GAP = 80;  // 수평 간격 (노드 사이)
-const V_GAP = 60;  // 수직 간격 (층 사이)
-const START_X = 100;
-const START_Y = 80;
+// ── 요소 스타일 상수 (레이아웃 상수는 lib/layout/constants) ─
 const FONT_SIZE = 16;
 const STROKE_WIDTH = 2;
 const FONT_FAMILY = 2; // normal
 
-// ── 메인 변환 함수 ──────────────────────────────────
+// ── 메인 변환 함수 (레이아웃 호출 + Excalidraw 어댑터) ─
 
 export function irToExcalidraw(ir: DiagramIR): ExElement[] {
+  // ID 생성기를 함수 스코프 클로저로 둠 → 호출마다 0부터 시작하여 멱등성 보장
+  let idCounter = 0;
+  const uid = () => `elem_${++idCounter}`;
+
   const elements: ExElement[] = [];
 
-  // 각 노드 → rectangle + text
-  const nodePositions = layoutNodes(ir.nodes, ir.edges, ir.diagramType);
+  // 각 노드 → rectangle + (컨테이너 바운드) text
+  // 레이아웃은 타입별 엔진(lib/layout)이 담당 → 어댑터는 요소 생성만.
+  const nodePositions = getLayout(ir.diagramType)(ir.nodes, ir.edges);
+
+  // 타입별 장식(타임라인 중심선·막대 기준선/값 라벨 등)
+  const decorations = getDecorations(ir.diagramType, ir, nodePositions, uid);
+  // 노드 뒤(배경)에 깔리는 장식 먼저
+  elements.push(...(decorations.behind as ExElement[]));
+
+  // node id → rectangle element id (화살표 바인딩에 사용)
+  const rectIdByNode = new Map<string, ExElement>();
+  const nodeById = new Map(ir.nodes.map((n) => [n.id, n]));
 
   for (const pos of nodePositions) {
-    elements.push(createRectElement(pos));
-    elements.push(createTextElement(pos));
+    const node = nodeById.get(pos.id);
+    const rect = createRectElement(pos, uid);
+    applyEmphasis(rect, node?.emphasis);
+    const text = createTextElement(pos, rect.id, uid);
+    // 텍스트를 도형에 컨테이너 바운드로 연결 → 도형 이동 시 텍스트가 따라감
+    rect.boundElements = [{ id: text.id, type: "text" }];
+    rectIdByNode.set(pos.id, rect);
+    elements.push(rect, text);
+    // badge 강조: 우상단 작은 원
+    if (node?.emphasis === "badge") {
+      elements.push(createBadge(pos, uid));
+    }
   }
 
-  // 각 엣지 → arrow
+  // 각 엣지 → arrow (양 끝 도형에 바인딩) + (있으면) 라벨 텍스트
   for (const edge of ir.edges) {
     const fromPos = nodePositions.find((n) => n.id === edge.from);
     const toPos = nodePositions.find((n) => n.id === edge.to);
     if (!fromPos || !toPos) continue;
 
-    elements.push(createArrowElement(fromPos, toPos, edge.label));
+    const fromRect = rectIdByNode.get(edge.from);
+    const toRect = rectIdByNode.get(edge.to);
+    const arrow = createArrowElement(
+      fromPos,
+      toPos,
+      uid,
+      fromRect?.id,
+      toRect?.id,
+    );
+    elements.push(arrow);
+
+    // 화살표를 양 끝 도형의 boundElements에 등록 → 노드 이동 시 화살표가 따라붙음
+    fromRect?.boundElements?.push({ id: arrow.id, type: "arrow" });
+    toRect?.boundElements?.push({ id: arrow.id, type: "arrow" });
+
+    // 엣지 라벨 → 화살표 중간 지점에 독립 텍스트
+    if (edge.label) {
+      elements.push(createEdgeLabel(fromPos, toPos, edge.label, uid));
+    }
   }
+
+  // 노드 앞(전경) 장식(막대 값 라벨 등)
+  elements.push(...(decorations.front as ExElement[]));
 
   return elements;
 }
 
-// ── 노드 레이아웃 ───────────────────────────────────
+// ── 아이콘 포함 변환 (image 요소 + files) ────────────
 
-interface NodePosition {
-  id: string;
-  label: string;
-  type: string;
-  color: string;
-  x: number;
-  y: number;
-}
+/** Excalidraw BinaryFiles 호환(느슨) */
+export type SceneFiles = Record<
+  string,
+  { mimeType: string; id: string; dataURL: string; created: number }
+>;
 
-function layoutNodes(
-  nodes: DiagramIR["nodes"],
-  edges: DiagramIR["edges"],
-  diagramType: DiagramType,
-): NodePosition[] {
-  const positions: NodePosition[] = [];
+const ICON_SIZE = 22;
+const ICON_PAD = 8;
 
-  switch (diagramType) {
-    case "flowchart": {
-      // Top-to-bottom 순차 배치 (분기 노드는 수평 분산)
-      const rows = layoutFlowchartRows(nodes, edges);
-      let y = START_Y;
-      const centerX = 400;
+/**
+ * 아이콘까지 포함해 변환한다. 아이콘은 image 요소로 추가되고, 그 dataURL은
+ * files 맵에 담긴다. 아이콘은 IR의 node.icon에서 결정적으로 재생성되므로
+ * files를 따로 영속화할 필요가 없다(저장/복원 시 IR에서 재계산).
+ */
+export function irToExcalidrawWithFiles(ir: DiagramIR): {
+  elements: ExElement[];
+  files: SceneFiles;
+} {
+  const elements = irToExcalidraw(ir);
+  const files: SceneFiles = {};
 
-      for (const row of rows) {
-        const rowWidth = (row.length - 1) * (NODE_W + H_GAP);
-        const startX = centerX - rowWidth / 2;
+  const positions = getLayout(ir.diagramType)(ir.nodes, ir.edges);
+  const nodeById = new Map(ir.nodes.map((n) => [n.id, n]));
 
-        for (let i = 0; i < row.length; i++) {
-          const node = row[i];
-          positions.push({
-            id: node.id,
-            label: node.label,
-            type: node.type ?? "process",
-            color: node.color ?? DEFAULT_NODE_COLORS[node.type ?? "process"],
-            x: startX + i * (NODE_W + H_GAP),
-            y,
-          });
-        }
-        y += NODE_H + V_GAP;
-      }
-      break;
-    }
+  for (const pos of positions) {
+    const node = nodeById.get(pos.id);
+    if (!node?.icon) continue;
+    const dataURL = iconToDataUrl(
+      node.icon,
+      pos.textColor ?? idealTextColor(pos.color),
+      48,
+    );
+    if (!dataURL) continue;
 
-    case "mindmap": {
-      // Radial 배치: 루트 중심, 자식 둘러싸기
-      const root = nodes[0];
-      const children = nodes.slice(1);
-      const cx = 400;
-      const cy = 300;
-
-      positions.push({
-        id: root.id,
-        label: root.label,
-        type: "start",
-        color: root.color ?? "#1E40AF",
-        x: cx - NODE_W / 2,
-        y: cy - NODE_H / 2,
-      });
-
-      const radius = 180;
-      const angleStep = (2 * Math.PI) / children.length;
-
-      for (let i = 0; i < children.length; i++) {
-        const angle = -Math.PI / 2 + angleStep * i;
-        const child = children[i];
-        positions.push({
-          id: child.id,
-          label: child.label,
-          type: "process",
-          color: child.color ?? "#3B82F6",
-          x: cx + radius * Math.cos(angle) - NODE_W / 2,
-          y: cy + radius * Math.sin(angle) - NODE_H / 2,
-        });
-      }
-      break;
-    }
-
-    case "process": {
-      // Left-to-right 선형 배치
-      let x = START_X;
-      const y = 300 - NODE_H / 2;
-
-      for (const node of nodes) {
-        positions.push({
-          id: node.id,
-          label: node.label,
-          type: node.type ?? "process",
-          color: node.color ?? DEFAULT_NODE_COLORS[node.type ?? "process"],
-          x,
-          y,
-        });
-        x += NODE_W + H_GAP;
-      }
-      break;
-    }
-
-    case "comparison": {
-      // 좌/우 컬럼 매트릭스
-      const leftNodes = nodes.filter((_, i) => i % 2 === 0);
-      const rightNodes = nodes.filter((_, i) => i % 2 === 1);
-      const leftX = 150;
-      const rightX = 500;
-
-      const placeColumn = (column: typeof nodes, startX: number) => {
-        let y = START_Y;
-        for (const node of column) {
-          positions.push({
-            id: node.id,
-            label: node.label,
-            type: "process",
-            color: node.color ?? (startX < 400 ? "#93C5FD" : "#FCD34D"),
-            x: startX,
-            y,
-          });
-          y += NODE_H + V_GAP;
-        }
-      };
-
-      placeColumn(leftNodes, leftX);
-      placeColumn(rightNodes, rightX);
-      break;
-    }
-
-    case "list": {
-      // 세로 리스트, 교차 배경색
-      let y = START_Y;
-      const x = 250;
-
-      for (let i = 0; i < nodes.length; i++) {
-        const node = nodes[i];
-        positions.push({
-          id: node.id,
-          label: node.label,
-          type: "process",
-          color: node.color ?? (i % 2 === 0 ? "#F3F4F6" : "#E5E7EB"),
-          x,
-          y,
-        });
-        y += NODE_H + V_GAP;
-      }
-      break;
-    }
+    const fileId = `iconfile_${pos.id}`;
+    files[fileId] = {
+      mimeType: "image/svg+xml",
+      id: fileId,
+      dataURL,
+      created: 0, // 결정적(스냅샷 안정) — 실제 시각은 불필요
+    };
+    elements.push({
+      type: "image",
+      id: `iconimg_${pos.id}`,
+      x: pos.x + ICON_PAD,
+      y: pos.y + ICON_PAD,
+      width: ICON_SIZE,
+      height: ICON_SIZE,
+      angle: 0,
+      opacity: 100,
+      fileId,
+      status: "saved",
+      scale: [1, 1],
+      locked: false,
+      boundElements: null,
+    } as unknown as ExElement);
   }
 
-  return positions;
-}
-
-// ── Flowchart 레이아웃 (Topological sort + row 분할) ──
-
-function layoutFlowchartRows(
-  nodes: DiagramIR["nodes"],
-  edges: DiagramIR["edges"],
-): Array<DiagramIR["nodes"]> {
-  const rows: Array<DiagramIR["nodes"]> = [];
-  const inDegree = new Map<string, number>();
-  const outEdges = new Map<string, string[]>();
-  const nodeMap = new Map(nodes.map((n) => [n.id, n]));
-
-  for (const n of nodes) {
-    inDegree.set(n.id, 0);
-    outEdges.set(n.id, []);
-  }
-
-  for (const e of edges) {
-    const out = outEdges.get(e.from);
-    if (out) out.push(e.to);
-    inDegree.set(e.to, (inDegree.get(e.to) ?? 0) + 1);
-  }
-
-  // BFS 위상 정렬로 row 단위 그룹화
-  let queue = nodes.filter((n) => inDegree.get(n.id) === 0);
-  const visited = new Set<string>();
-
-  while (queue.length > 0) {
-    const row = [...queue];
-    rows.push(row);
-    visited.clear();
-
-    const nextQueue: typeof queue = [];
-    for (const node of queue) {
-      const children = outEdges.get(node.id) ?? [];
-      for (const childId of children) {
-        if (visited.has(childId)) continue; // 같은 row에 중복 추가 방지
-        const deg = (inDegree.get(childId) ?? 1) - 1;
-        inDegree.set(childId, deg);
-        if (deg === 0) {
-          visited.add(childId);
-          const childNode = nodeMap.get(childId);
-          if (childNode) nextQueue.push(childNode);
-        }
-      }
-    }
-
-    queue = nextQueue;
-  }
-
-  // 남은 노드 (사이클 등) 마지막 row에 추가
-  const remaining = nodes.filter((n) => {
-    return !rows.some((r) => r.some((rn) => rn.id === n.id));
-  });
-  if (remaining.length > 0) {
-    rows.push(remaining);
-  }
-
-  return rows;
+  return { elements, files };
 }
 
 // ── Element 생성기 ──────────────────────────────────
 
-let _idCounter = 0;
-function uid(): string {
-  return `elem_${++_idCounter}`;
-}
-
-function createRectElement(pos: NodePosition): ExElement {
+function createRectElement(pos: NodePosition, uid: () => string): ExElement {
   return {
-    type: "rectangle",
+    type: pos.shape ?? "rectangle",
     id: uid(),
     x: pos.x,
     y: pos.y,
-    width: NODE_W,
-    height: NODE_H,
+    width: pos.w ?? NODE_W,
+    height: pos.h ?? NODE_H,
     backgroundColor: pos.color,
     strokeColor: "#1F2937",
     strokeWidth: STROKE_WIDTH,
     roughness: 0,
-    boundElements: [],
+    ...(pos.opacity != null ? { opacity: pos.opacity } : {}),
+    boundElements: [], // 호출부에서 text/arrow 바인딩이 추가됨
   };
 }
 
-function createTextElement(pos: NodePosition): ExElement {
-  const textId = uid();
-  // 텍스트를 rectangle 안에 가운데 정렬
+function createTextElement(
+  pos: NodePosition,
+  containerId: string,
+  uid: () => string,
+): ExElement {
+  // 컨테이너 바운드 텍스트: Excalidraw가 containerId 도형 안에 가운데 정렬로 배치
+  const w = pos.w ?? NODE_W;
+  const h = pos.h ?? NODE_H;
   return {
     type: "text",
-    id: textId,
+    id: uid(),
     x: pos.x + 10,
-    y: pos.y + NODE_H / 2 - FONT_SIZE / 2,
-    width: NODE_W - 20,
+    y: pos.y + h / 2 - FONT_SIZE / 2,
+    width: w - 20,
     height: FONT_SIZE + 4,
     text: pos.label,
     fontSize: FONT_SIZE,
     fontFamily: FONT_FAMILY,
-    strokeColor: "#1F2937",
+    // 노드 배경 대비에 맞춰 텍스트 색 자동 보정(가독성)
+    strokeColor: pos.textColor ?? idealTextColor(pos.color),
     roughness: 0,
+    containerId,
+    textAlign: "center",
+    verticalAlign: "middle",
     boundElements: null,
   };
 }
@@ -326,15 +207,13 @@ function createTextElement(pos: NodePosition): ExElement {
 function createArrowElement(
   from: NodePosition,
   to: NodePosition,
-  /**
-   * label은 향후 edge 라벨 렌더링에 사용 예정
-   */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _label?: string,
+  uid: () => string,
+  fromId: string | undefined,
+  toId: string | undefined,
 ): ExElement {
-  const fromX = from.x + NODE_W / 2;
-  const fromY = from.y + NODE_H;
-  const toX = to.x + NODE_W / 2;
+  const fromX = from.x + (from.w ?? NODE_W) / 2;
+  const fromY = from.y + (from.h ?? NODE_H);
+  const toX = to.x + (to.w ?? NODE_W) / 2;
   const toY = to.y;
 
   return {
@@ -347,6 +226,9 @@ function createArrowElement(
     strokeColor: "#6B7280",
     strokeWidth: STROKE_WIDTH,
     roughness: 0,
+    // 양 끝 도형에 바인딩 → 노드를 움직이면 화살표 끝점이 따라감
+    startBinding: fromId ? { elementId: fromId, focus: 0, gap: 4 } : undefined,
+    endBinding: toId ? { elementId: toId, focus: 0, gap: 4 } : undefined,
     points: [
       [fromX - Math.min(fromX, toX), fromY - Math.min(fromY, toY)],
       [toX - Math.min(fromX, toX), toY - Math.min(fromY, toY)],
@@ -355,5 +237,72 @@ function createArrowElement(
   };
 }
 
+// ── 데코레이터 / 엣지 라벨 ──────────────────────────
+
+const HIGHLIGHT_COLOR = "#F59E0B";
+
+/** 강조(highlight): 두꺼운 강조색 테두리 */
+function applyEmphasis(rect: ExElement, emphasis?: string): void {
+  if (emphasis === "highlight") {
+    rect.strokeColor = HIGHLIGHT_COLOR;
+    rect.strokeWidth = 4;
+  }
+}
+
+/** 강조(badge): 도형 우상단의 작은 강조색 원 */
+function createBadge(pos: NodePosition, uid: () => string): ExElement {
+  const w = pos.w ?? NODE_W;
+  const r = 12;
+  return {
+    type: "ellipse",
+    id: uid(),
+    x: pos.x + w - r,
+    y: pos.y - r,
+    width: r * 2,
+    height: r * 2,
+    backgroundColor: HIGHLIGHT_COLOR,
+    strokeColor: "#ffffff",
+    strokeWidth: 2,
+    fillStyle: "solid",
+    roughness: 0,
+    boundElements: null,
+  };
+}
+
+/** 엣지 라벨: 두 노드 중간 지점의 독립 텍스트(흰 배경으로 화살표 위에 가독) */
+function createEdgeLabel(
+  from: NodePosition,
+  to: NodePosition,
+  label: string,
+  uid: () => string,
+): ExElement {
+  const fromCx = from.x + (from.w ?? NODE_W) / 2;
+  const fromCy = from.y + (from.h ?? NODE_H) / 2;
+  const toCx = to.x + (to.w ?? NODE_W) / 2;
+  const toCy = to.y + (to.h ?? NODE_H) / 2;
+  const midX = (fromCx + toCx) / 2;
+  const midY = (fromCy + toCy) / 2;
+  const width = Math.max(40, label.length * 8);
+  return {
+    type: "text",
+    id: uid(),
+    x: midX - width / 2,
+    y: midY - (FONT_SIZE - 2) / 2,
+    width,
+    height: FONT_SIZE,
+    text: label,
+    fontSize: FONT_SIZE - 4,
+    fontFamily: FONT_FAMILY,
+    strokeColor: "#6B7280",
+    backgroundColor: "#ffffff",
+    roughness: 0,
+    textAlign: "center",
+    verticalAlign: "middle",
+    containerId: null,
+    boundElements: null,
+  };
+}
+
 // ── 재내보내기 ──────────────────────────────────────
+// ExElement는 SceneElement의 별칭(하위호환). 신규 코드는 SceneElement 사용 권장.
 export type { ExElement, NodePosition };

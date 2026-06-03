@@ -19,6 +19,7 @@ Given text, you must:
    - step-by-step with stages → "process"
    - comparing A vs B / multiple items → "comparison"
    - simple enumeration → "list"
+   - chronological events / history / milestones → "timeline"
 3. Output a valid JSON structure that describes nodes and edges.
 
 Rules:
@@ -50,6 +51,15 @@ Node types:
 - "decision": 분기/판단 지점, 보통 주황색(#F59E0B)
 - "end": 종료점, 보통 빨간색(#EF4444)
 - 기본값: 없으면 "process"
+
+Icons (optional but recommended):
+- You MAY add an "icon" field to a node using a lucide icon name (kebab-case),
+  e.g. "icon":"rocket", "credit-card", "shield-check", "users", "database".
+- Pick an icon that matches the node's meaning. Omit if unsure.
+
+Emphasis (optional):
+- Add "emphasis":"highlight" to draw attention to a key node (bold accent border),
+  or "emphasis":"badge" to mark it with a small badge. Use sparingly (0-2 nodes).
 
 Color suggestions per diagram type:
 - flowchart: blue process nodes, green start, red end, orange decisions
@@ -180,6 +190,22 @@ export const TYPE_INSTRUCTIONS: Record<DiagramType, string> = {
     "Convert this into a comparison table layout. Group items by category. Use alternating colors for left/right columns. Use type:'process' for all nodes.",
   list:
     "Convert this into a simple bullet-list style diagram. Items in vertical order. Use type:'process' for all nodes with subtle alternating background colors.",
+  timeline:
+    "Convert this into a chronological timeline. Order nodes by time (earliest first). Each node is an event/milestone with a date or phase in its label. Connect consecutive events with edges (n1→n2→n3...). Use type:'process' for events.",
+  "card-grid":
+    "Convert this into independent info cards (no edges). Each node is a self-contained card with a concise label. Good for features, benefits, key points.",
+  "framework-2x2":
+    "Convert this into a 2x2 matrix (quadrants), e.g. importance/urgency, effort/impact. Provide exactly 4 nodes ordered: top-left, top-right, bottom-left, bottom-right. No edges.",
+  pyramid:
+    "Convert this into a pyramid/hierarchy of levels, ordered top (apex) to bottom (base). Each node is a level. No edges. Good for needs hierarchies, layered architectures.",
+  funnel:
+    "Convert this into a conversion funnel, ordered top (widest, most) to bottom (narrowest, fewest). Each node is a stage. Optionally include a numeric 'value' per node. No edges.",
+  venn:
+    "Convert this into a Venn diagram of 2-3 overlapping sets. Each node is a set/circle. No edges. Good for shared/distinct concepts.",
+  "bar-chart":
+    "Convert this into a bar chart. Each node is a bar; include a numeric 'value' field per node for its magnitude. No edges. Order as given.",
+  swimlane:
+    "Convert this into swimlanes. Assign each node a 'group' (the lane, e.g. a team/role/phase). Nodes within a lane flow left-to-right in order. Use edges for hand-offs across lanes.",
 };
 
 // ── 빌더 함수 ──────────────────────────────────────
@@ -221,5 +247,38 @@ export function buildMessages(
   return {
     system: SYSTEM_PROMPT,
     user: buildUserPrompt(text, diagramType),
+  };
+}
+
+// ── 선택 요소 편집(AI 세부 수정) ───────────────────
+
+export const EDIT_SYSTEM_PROMPT = `You edit selected objects in a diagram based on a user instruction.
+You MUST respond with strict JSON: {"ops":[ ... ]} using ONLY these ops:
+- {"op":"recolor","color":"#RRGGBB"}            // fill color
+- {"op":"recolorStroke","color":"#RRGGBB"}      // border color
+- {"op":"resize","width":N,"height":N}          // either/both, pixels
+- {"op":"opacity","value":0-100}
+- {"op":"strokeWidth","value":0-20}
+- {"op":"fillStyle","value":"solid|hachure|cross-hatch|zigzag"}
+- {"op":"roundness","rounded":true|false}        // rounded corners
+- {"op":"emphasize"}                             // accent border to draw attention
+- {"op":"relabel","text":"new text"}             // change label text
+- {"op":"align","mode":"left|center|right|top|middle|bottom"}   // 2+ objects
+- {"op":"distribute","axis":"horizontal|vertical"}             // 3+ objects
+- {"op":"flip","axis":"horizontal|vertical"}
+- {"op":"shadow"}
+
+Rules:
+- Use 1-5 ops. Choose the minimal ops that satisfy the instruction.
+- Colors MUST be #RRGGBB hex. Keep relabel text in the input's language.
+- Only output JSON, no prose.`;
+
+export function buildEditMessages(
+  instruction: string,
+  selectionSummary: string,
+): { system: string; user: string } {
+  return {
+    system: EDIT_SYSTEM_PROMPT,
+    user: `Selected objects:\n${selectionSummary}\n\nInstruction: "${instruction}"\n\nReturn JSON ops.`,
   };
 }

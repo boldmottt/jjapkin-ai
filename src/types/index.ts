@@ -8,6 +8,14 @@ export const DIAGRAM_TYPES = [
   "process",
   "comparison",
   "list",
+  "timeline",
+  "card-grid",
+  "framework-2x2",
+  "pyramid",
+  "funnel",
+  "venn",
+  "bar-chart",
+  "swimlane",
 ] as const;
 
 export type DiagramType = (typeof DIAGRAM_TYPES)[number];
@@ -18,6 +26,14 @@ export const DIAGRAM_TYPE_LABELS: Record<DiagramType, string> = {
   process: "프로세스",
   comparison: "비교표",
   list: "리스트",
+  timeline: "타임라인",
+  "card-grid": "카드 그리드",
+  "framework-2x2": "2x2 매트릭스",
+  pyramid: "피라미드",
+  funnel: "퍼널",
+  venn: "벤다이어그램",
+  "bar-chart": "막대 차트",
+  swimlane: "스윔레인",
 };
 
 // ── AI 파이프라인 ───────────────────────────────────
@@ -28,6 +44,10 @@ export interface DiagramNode {
   type?: "start" | "process" | "decision" | "end";
   color?: string;
   children?: DiagramNode[]; // mindmap / hierarchy
+  value?: number; // bar-chart/funnel 등 크기/수치 표현
+  group?: string; // swimlane 등 그룹/레인 분류
+  icon?: string; // lucide 아이콘 id (예: "lucide:rocket")
+  emphasis?: "none" | "highlight" | "badge"; // 강조 데코레이터
 }
 
 /** AI가 생성하는 엣지 */

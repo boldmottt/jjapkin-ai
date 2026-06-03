@@ -1,16 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Download, FileImage, FileText, Presentation, PenTool } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 
-export type ExportFormat = "ai-svg" | "ai-pdf" | "eps" | "png" | "svg" | "pptx" | "pdf";
+export type ExportFormat = "ai-svg" | "ai-pdf" | "png" | "svg" | "pptx" | "pdf" | "pdf-vector";
+
+export interface ExportOptions {
+  scale: number;
+}
 
 interface ExportModalProps {
   open: boolean;
   onClose: () => void;
-  onExport: (format: ExportFormat) => void | Promise<void>;
+  onExport: (format: ExportFormat, opts: ExportOptions) => void | Promise<void>;
 }
+
+// PNG 배율 프리셋(발표/문서용)
+const SCALE_PRESETS: { value: number; label: string }[] = [
+  { value: 2, label: "표준 2x" },
+  { value: 3, label: "고해상도 3x (발표용)" },
+  { value: 4, label: "최대 4x (인쇄)" },
+];
 
 const FORMATS: {
   id: ExportFormat;
@@ -33,15 +44,7 @@ const FORMATS: {
     label: "Illustrator PDF",
     icon: PenTool,
     ext: ".ai.pdf",
-    desc: "Illustrator에서 PDF 열기로 편집. 벡터 유지",
-    priority: true,
-  },
-  {
-    id: "eps",
-    label: "EPS (Illustrator)",
-    icon: PenTool,
-    ext: ".eps",
-    desc: "레거시 PostScript. 모든 버전의 Illustrator 호환",
+    desc: "Illustrator에서 PDF 열기로 편집 (A3, 고해상도 이미지)",
     priority: true,
   },
   {
@@ -70,24 +73,43 @@ const FORMATS: {
   },
   {
     id: "pdf",
-    label: "PDF 문서",
+    label: "PDF 문서 (이미지)",
     icon: FileText,
     ext: ".pdf",
-    desc: "공유/인쇄용 범용 문서",
+    desc: "공유/인쇄용. 화면을 이미지로 담음 (편집 불가)",
+    priority: false,
+  },
+  {
+    id: "pdf-vector",
+    label: "PDF 문서 (벡터)",
+    icon: FileText,
+    ext: ".pdf",
+    desc: "무한 확대·재편집 가능한 벡터 PDF. Illustrator에서 열기 가능",
     priority: false,
   },
 ];
 
 export function ExportModal({ open, onClose, onExport }: ExportModalProps) {
   const [selected, setSelected] = useState<ExportFormat>("ai-svg");
+  const [scale, setScale] = useState(3);
   const [exporting, setExporting] = useState(false);
+
+  // Esc로 닫기 (내보내는 중에는 막음)
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !exporting) onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, exporting, onClose]);
 
   if (!open) return null;
 
   const handleExport = async () => {
     setExporting(true);
     try {
-      await onExport(selected);
+      await onExport(selected, { scale });
     } finally {
       setExporting(false);
       onClose();
@@ -95,7 +117,15 @@ export function ExportModal({ open, onClose, onExport }: ExportModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      onClick={(e) => {
+        // 바깥(backdrop) 클릭 시 닫기
+        if (e.target === e.currentTarget && !exporting) onClose();
+      }}
+      role="dialog"
+      aria-modal="true"
+    >
       <div className="w-full max-w-md rounded-xl bg-background p-6 shadow-xl">
         <h3 className="mb-1 text-lg font-semibold">내보내기</h3>
         <p className="mb-4 text-xs text-muted-foreground">
@@ -139,6 +169,24 @@ export function ExportModal({ open, onClose, onExport }: ExportModalProps) {
             );
           })}
         </div>
+
+        {/* PNG 배율 프리셋 (래스터 형식에만 적용) */}
+        {selected === "png" && (
+          <div className="mt-4 flex items-center justify-between gap-2 text-sm">
+            <span className="text-muted-foreground">해상도 배율</span>
+            <select
+              value={scale}
+              onChange={(e) => setScale(Number(e.target.value))}
+              className="rounded-lg border bg-transparent px-2 py-1.5 text-sm outline-none focus:border-primary"
+            >
+              {SCALE_PRESETS.map((p) => (
+                <option key={p.value} value={p.value}>
+                  {p.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         <div className="mt-6 flex justify-end gap-3">
           <button

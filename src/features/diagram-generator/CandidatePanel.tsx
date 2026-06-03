@@ -1,10 +1,11 @@
 "use client";
 
-import { useGenerationStore } from "@/stores";
+import { useGenerationStore, useEditorLayoutStore } from "@/stores";
 import { useDiagramHistoryStore } from "@/stores/diagram-history";
 import { DIAGRAM_TYPE_LABELS } from "@/types";
 import { Clock, X } from "lucide-react";
-import type { DiagramType } from "@/types";
+import { toast } from "@/stores/toast";
+import type { DiagramType, GenerationCandidate } from "@/types";
 
 interface CandidatePanelProps {
   className?: string;
@@ -13,7 +14,15 @@ interface CandidatePanelProps {
 export function CandidatePanel({ className }: CandidatePanelProps) {
   const { candidates, status, selectedCandidateId, selectCandidate, error } =
     useGenerationStore();
+  const hydratePersisted = useGenerationStore((s) => s.hydratePersisted);
+  const setActiveDiagramType = useEditorLayoutStore((s) => s.setActiveDiagramType);
   const { entries, removeEntry } = useDiagramHistoryStore();
+
+  const restoreFromHistory = (candidate: GenerationCandidate) => {
+    hydratePersisted(candidate, []);
+    setActiveDiagramType(candidate.ir.diagramType);
+    toast.info("이전 다이어그램을 불러왔어요.");
+  };
 
   const hasHistory = entries.length > 0;
 
@@ -84,19 +93,28 @@ export function CandidatePanel({ className }: CandidatePanelProps) {
             {entries.map((entry) => (
               <div
                 key={entry.id}
-                className="relative w-40 flex-shrink-0 rounded-lg border p-2 text-left text-xs"
+                className="relative w-40 flex-shrink-0 rounded-lg border text-left text-xs transition-colors hover:border-primary/50"
               >
                 <button
                   onClick={() => removeEntry(entry.id)}
-                  className="absolute right-1 top-1 rounded p-0.5 hover:bg-muted"
+                  className="absolute right-1 top-1 z-10 rounded p-0.5 hover:bg-muted"
+                  aria-label="삭제"
                 >
                   <X className="h-3 w-3" />
                 </button>
-                <p className="mr-4 truncate font-medium">{entry.candidate.ir.title}</p>
-                <p className="text-muted-foreground">
-                  {DIAGRAM_TYPE_LABELS[entry.candidate.ir.diagramType as DiagramType]}
-                </p>
-                <p className="mt-1 truncate text-[10px] text-muted-foreground/60">{entry.text}</p>
+                <button
+                  onClick={() => restoreFromHistory(entry.candidate)}
+                  className="block w-full p-2 text-left"
+                  title="이 다이어그램 불러오기"
+                >
+                  <p className="mr-4 truncate font-medium">{entry.candidate.ir.title}</p>
+                  <p className="text-muted-foreground">
+                    {DIAGRAM_TYPE_LABELS[entry.candidate.ir.diagramType as DiagramType]}
+                  </p>
+                  <p className="mt-1 truncate text-[10px] text-muted-foreground/60">
+                    {entry.text}
+                  </p>
+                </button>
               </div>
             ))}
           </div>

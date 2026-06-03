@@ -1,0 +1,17 @@
+import { type NextRequest } from "next/server";
+import { updateSession } from "@/lib/supabase/middleware";
+
+export async function middleware(request: NextRequest) {
+  return updateSession(request);
+}
+
+export const config = {
+  matcher: [
+    /*
+     * 다음을 제외한 모든 요청에 적용:
+     * - _next/static, _next/image (정적 자산)
+     * - favicon.ico 및 이미지 확장자
+     */
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+  ],
+};
