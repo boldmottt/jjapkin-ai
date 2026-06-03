@@ -63,7 +63,6 @@ interface SceneReport {
 
 function inspect(elements: ExElement[]): SceneReport {
   const ids = elements.map((e) => e.id);
-  const idSet = new Set(ids);
   const rectIds = new Set(
     elements.filter((e) => e.type === "rectangle").map((e) => e.id),
   );
@@ -123,7 +122,7 @@ function inspect(elements: ExElement[]): SceneReport {
     danglingTextRefs,
     danglingArrowRefs,
     duplicateIds: Array.from(new Set(duplicateIds)),
-    nanCoords: nanCoords + (idSet.size === ids.length ? 0 : 0),
+    nanCoords,
   };
 }
 

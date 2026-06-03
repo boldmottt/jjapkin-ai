@@ -4,27 +4,19 @@ import type { DiagramType, GenerationCandidate } from "@/types";
 // ── 편집기 레이아웃 상태 ────────────────────────────
 
 interface EditorLayoutState {
-  /** 좌측 텍스트 패널 너비 비율 (0~1) */
-  textPanelRatio: number;
   /** 하단 후보 패널 표시 여부 */
   showCandidatePanel: boolean;
   /** 현재 활성화된 다이어그램 유형 */
   activeDiagramType: DiagramType | null;
 
-  setTextPanelRatio: (ratio: number) => void;
-  toggleCandidatePanel: () => void;
   setShowCandidatePanel: (show: boolean) => void;
   setActiveDiagramType: (type: DiagramType | null) => void;
 }
 
 export const useEditorLayoutStore = create<EditorLayoutState>((set) => ({
-  textPanelRatio: 0.4,
   showCandidatePanel: false,
   activeDiagramType: null,
 
-  setTextPanelRatio: (ratio) => set({ textPanelRatio: ratio }),
-  toggleCandidatePanel: () =>
-    set((s) => ({ showCandidatePanel: !s.showCandidatePanel })),
   setShowCandidatePanel: (show) => set({ showCandidatePanel: show }),
   setActiveDiagramType: (type) => set({ activeDiagramType: type }),
 }));
@@ -127,31 +119,7 @@ export const useDocumentStore = create<DocumentState>((set) => ({
   hydrate: (title, rawText) => set({ title, rawText, isDirty: false }),
 }));
 
-// ── AI 파이프라인 상태 ──────────────────────────────
-
-interface AiPipelineState {
-  /** 실제 폴백 체인(openai.ts)에서 사용하는 모델 식별자와 일치 */
-  selectedModel: "deepseek-chat" | "gpt-4o-mini" | "claude-3-5-sonnet";
-  cacheEnabled: boolean;
-  /**
-   * UI 표시용 캐시일 뿐, 진실의 원천이 아님.
-   * 실제 과금/한도는 서버(User.creditsUsed)에서 관리해야 하며
-   * 새로고침 시 초기값으로 리셋됨.
-   */
-  creditsRemaining: number;
-
-  setModel: (model: AiPipelineState["selectedModel"]) => void;
-  setCacheEnabled: (enabled: boolean) => void;
-  decrementCredits: (amount: number) => void;
-}
-
-export const useAiPipelineStore = create<AiPipelineState>((set) => ({
-  selectedModel: "deepseek-chat",
-  cacheEnabled: true,
-  creditsRemaining: 500,
-
-  setModel: (model) => set({ selectedModel: model }),
-  setCacheEnabled: (enabled) => set({ cacheEnabled: enabled }),
-  decrementCredits: (amount) =>
-    set((s) => ({ creditsRemaining: Math.max(0, s.creditsRemaining - amount) })),
-}));
+// AI 파이프라인 상태 스토어는 제거됨.
+// (모델 선택/캐시 토글/크레딧은 어디에도 연결되지 않은 죽은 상태였고,
+//  1인 BYO 키 사용에서는 크레딧 개념 자체가 무의미하다.
+//  실제 폴백 체인·캐시는 서버 측 openai.ts/cache.ts가 전담한다.)
