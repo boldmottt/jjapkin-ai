@@ -10,6 +10,7 @@
 import jsPDF from "jspdf";
 import { svg2pdf } from "svg2pdf.js";
 import { sceneToSvg, type SceneApi } from "./export-scene";
+import { registerKoreanFont, applyKoreanFontToSvg } from "./korean-font";
 
 interface VectorPdfExportOptions {
   api: SceneApi;
@@ -87,7 +88,13 @@ export async function exportToVectorPdf(
     format: [pageWidth, pageHeight],
   });
 
+  // 한글 폰트 임베딩: 제목/도형 텍스트의 한글이 깨지지 않도록 등록하고,
+  // SVG 텍스트의 font-family를 한글 폰트로 덮어쓴다.
+  const fontFamily = await registerKoreanFont(pdf);
+  applyKoreanFontToSvg(svg);
+
   // 제목
+  pdf.setFont(fontFamily, "normal");
   pdf.setFontSize(16);
   pdf.text(title, 16, 22);
 
