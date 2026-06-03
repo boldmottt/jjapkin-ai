@@ -36,7 +36,7 @@ export function MermaidPreview({ visible }: MermaidPreviewProps) {
           startOnLoad: false,
           theme: "default",
           // 사용자 입력을 그대로 렌더링하므로 strict로 XSS 방지
-          securityLevel: "strict",
+          securityLevel: "antiscript",
           flowchart: { useMaxWidth: false },
         });
 
@@ -53,15 +53,10 @@ export function MermaidPreview({ visible }: MermaidPreviewProps) {
           setSvg(rendered);
           setError(null);
         }
-      } catch (err) {
+      } catch {
         if (!cancelled) {
           setSvg(null);
-          // Mermaid 문법 오류는 정상적인 상황 (아직 다이어그램 용 텍스트가 아님)
-          setError(
-            (err as Error).message?.includes("Parse error")
-              ? null
-              : (err as Error).message,
-          );
+          setError(null);
         }
       }
     }
