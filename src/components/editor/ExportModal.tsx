@@ -6,11 +6,22 @@ import { cn } from "@/lib/utils/cn";
 
 export type ExportFormat = "ai-svg" | "ai-pdf" | "png" | "svg" | "pptx" | "pdf" | "pdf-vector";
 
+export interface ExportOptions {
+  scale: number;
+}
+
 interface ExportModalProps {
   open: boolean;
   onClose: () => void;
-  onExport: (format: ExportFormat) => void | Promise<void>;
+  onExport: (format: ExportFormat, opts: ExportOptions) => void | Promise<void>;
 }
+
+// PNG 배율 프리셋(발표/문서용)
+const SCALE_PRESETS: { value: number; label: string }[] = [
+  { value: 2, label: "표준 2x" },
+  { value: 3, label: "고해상도 3x (발표용)" },
+  { value: 4, label: "최대 4x (인쇄)" },
+];
 
 const FORMATS: {
   id: ExportFormat;
@@ -80,6 +91,7 @@ const FORMATS: {
 
 export function ExportModal({ open, onClose, onExport }: ExportModalProps) {
   const [selected, setSelected] = useState<ExportFormat>("ai-svg");
+  const [scale, setScale] = useState(3);
   const [exporting, setExporting] = useState(false);
 
   // Esc로 닫기 (내보내는 중에는 막음)
@@ -97,7 +109,7 @@ export function ExportModal({ open, onClose, onExport }: ExportModalProps) {
   const handleExport = async () => {
     setExporting(true);
     try {
-      await onExport(selected);
+      await onExport(selected, { scale });
     } finally {
       setExporting(false);
       onClose();
@@ -157,6 +169,24 @@ export function ExportModal({ open, onClose, onExport }: ExportModalProps) {
             );
           })}
         </div>
+
+        {/* PNG 배율 프리셋 (래스터 형식에만 적용) */}
+        {selected === "png" && (
+          <div className="mt-4 flex items-center justify-between gap-2 text-sm">
+            <span className="text-muted-foreground">해상도 배율</span>
+            <select
+              value={scale}
+              onChange={(e) => setScale(Number(e.target.value))}
+              className="rounded-lg border bg-transparent px-2 py-1.5 text-sm outline-none focus:border-primary"
+            >
+              {SCALE_PRESETS.map((p) => (
+                <option key={p.value} value={p.value}>
+                  {p.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         <div className="mt-6 flex justify-end gap-3">
           <button

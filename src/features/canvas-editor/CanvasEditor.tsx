@@ -248,6 +248,18 @@ export function CanvasEditor() {
     [sceneElements, selectedIds, applyElements],
   );
 
+  // 원클릭 정리: IR에서 깔끔히 재배치 + 기본 테마 적용 (지저분한 장면 복구)
+  const handleBeautify = useCallback(() => {
+    if (!selectedCandidate) return;
+    try {
+      const { elements } = irToExcalidrawWithFiles(selectedCandidate.ir);
+      applyElements(applyTheme(elements as ExcalidrawElement[], "corporate"));
+      toast.success("정리 완료 — 재배치 + 테마 적용");
+    } catch {
+      toast.error("정리에 실패했습니다.");
+    }
+  }, [selectedCandidate, applyElements]);
+
   const handleApplyTheme = useCallback(
     (themeId: string) => {
       if (sceneElements.length === 0) return;
@@ -283,6 +295,13 @@ export function CanvasEditor() {
   const paletteCommands = useMemo<Command[]>(
     () => [
       {
+        id: "cmd-beautify",
+        label: "정리 (재배치 + 테마)",
+        group: "편집",
+        keywords: "beautify cleanup tidy 정리",
+        run: () => handleBeautify(),
+      },
+      {
         id: "cmd-export",
         label: "내보내기…",
         group: "파일",
@@ -309,7 +328,7 @@ export function CanvasEditor() {
         run: () => handleApplyTheme(t.id),
       })),
     ],
-    [handleApplyTheme],
+    [handleApplyTheme, handleBeautify],
   );
   useRegisterCommands(paletteCommands);
 
@@ -317,7 +336,7 @@ export function CanvasEditor() {
     selectedCandidateId && status === "success" && excalidrawElements.length > 0;
 
   const handleExport = useCallback(
-    async (format: ExportFormat) => {
+    async (format: ExportFormat, opts?: { scale?: number }) => {
       const api = apiRef.current;
       if (!api) {
         toast.error("캔버스가 아직 준비되지 않았습니다.");
@@ -333,7 +352,7 @@ export function CanvasEditor() {
             await exportToIllustratorPdf({ api, filename: title, title });
             break;
           case "png":
-            await exportToPng({ api, filename: title });
+            await exportToPng({ api, filename: title, scale: opts?.scale ?? 2 });
             break;
           case "svg":
             await exportToSvg({ api, filename: title });
@@ -367,6 +386,14 @@ export function CanvasEditor() {
             : "다이어그램을 생성해주세요"}
         </span>
         <div className="flex-1" />
+        <button
+          onClick={handleBeautify}
+          disabled={!showExcalidraw}
+          className="inline-flex items-center gap-1 rounded border px-3 py-1.5 text-xs font-medium transition-colors hover:border-primary/50 disabled:opacity-30"
+          title="재배치 + 테마로 한 번에 정리"
+        >
+          ✨ 정리
+        </button>
         <select
           aria-label="테마 적용"
           defaultValue=""
