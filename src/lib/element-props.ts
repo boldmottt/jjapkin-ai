@@ -6,9 +6,13 @@
  */
 
 import type { SceneElement } from "@/lib/scene/types";
+import { num, boundingBox, isShadowable, type BBox } from "@/lib/scene/geometry";
 
 /** 속성 편집 로직이 다루는 요소 = 정규 SceneElement (별칭, 하위호환) */
 export type PropEl = SceneElement;
+
+// 기하 유틸은 scene/geometry로 통합. 기존 import 경로 호환을 위해 재수출.
+export { boundingBox, type BBox };
 
 export type AlignMode =
   | "left"
@@ -17,36 +21,6 @@ export type AlignMode =
   | "top"
   | "middle"
   | "bottom";
-
-function num(v: unknown): number {
-  return typeof v === "number" && Number.isFinite(v) ? v : 0;
-}
-
-export interface BBox {
-  minX: number;
-  minY: number;
-  maxX: number;
-  maxY: number;
-}
-
-export function boundingBox(els: readonly PropEl[]): BBox {
-  if (els.length === 0) return { minX: 0, minY: 0, maxX: 0, maxY: 0 };
-  let minX = Infinity,
-    minY = Infinity,
-    maxX = -Infinity,
-    maxY = -Infinity;
-  for (const e of els) {
-    const x = num(e.x);
-    const y = num(e.y);
-    const w = num(e.width);
-    const h = num(e.height);
-    minX = Math.min(minX, x);
-    minY = Math.min(minY, y);
-    maxX = Math.max(maxX, x + w);
-    maxY = Math.max(maxY, y + h);
-  }
-  return { minX, minY, maxX, maxY };
-}
 
 export function getSelected<T extends PropEl>(
   elements: readonly T[],
@@ -176,15 +150,6 @@ export function distributeElements<T extends PropEl>(
 
 // ── 그림자 ──────────────────────────────────────────
 
-const SHADOWABLE = new Set([
-  "rectangle",
-  "ellipse",
-  "diamond",
-  "arrow",
-  "line",
-  "freedraw",
-]);
-
 let _shadowSeq = 0;
 function defaultShadowId(): string {
   return `shadow_${Date.now().toString(36)}_${(_shadowSeq++).toString(36)}_${Math.random()
@@ -215,7 +180,7 @@ export function createShadows<T extends PropEl>(
 
   const out: T[] = [];
   for (const e of elements) {
-    if (ids.has(e.id) && SHADOWABLE.has(String(e.type))) {
+    if (ids.has(e.id) && isShadowable(e)) {
       const shadow = {
         ...e,
         id: idGen(),

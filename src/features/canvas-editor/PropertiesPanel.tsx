@@ -16,6 +16,7 @@ import {
   type PropEl,
   type AlignMode,
 } from "@/lib/element-props";
+import { num } from "@/lib/scene/geometry";
 
 interface PropertiesPanelProps {
   elements: PropEl[]; // 선택된 요소들
@@ -26,9 +27,6 @@ interface PropertiesPanelProps {
   onAddShadow: () => void;
   onClose: () => void;
 }
-
-const num = (v: unknown, d = 0): number =>
-  typeof v === "number" && Number.isFinite(v) ? v : d;
 
 const ROUNDABLE = new Set(["rectangle", "diamond", "line"]);
 

@@ -11,6 +11,7 @@
  */
 
 import type { SceneElement } from "@/lib/scene/types";
+import { isText } from "@/lib/scene/geometry";
 
 /** 레이어 로직이 다루는 요소 = 정규 SceneElement (별칭, 하위호환) */
 export type SceneEl = SceneElement;
@@ -60,7 +61,7 @@ export function buildLayers(elements: readonly SceneEl[]): LayerItem[] {
   // 컨테이너 id → 바인딩 텍스트 요소
   const textByContainer = new Map<string, SceneEl>();
   for (const e of live) {
-    if (e.type === "text" && typeof e.containerId === "string") {
+    if (isText(e) && typeof e.containerId === "string") {
       textByContainer.set(e.containerId, e);
     }
   }
@@ -71,7 +72,7 @@ export function buildLayers(elements: readonly SceneEl[]): LayerItem[] {
   for (const e of live) {
     // 컨테이너에 바인딩된 텍스트는 컨테이너 항목에 흡수 (별도 항목 X)
     if (
-      e.type === "text" &&
+      isText(e) &&
       typeof e.containerId === "string" &&
       byId.has(e.containerId)
     ) {
@@ -98,7 +99,7 @@ export function buildLayers(elements: readonly SceneEl[]): LayerItem[] {
 
     const labelText =
       (boundText && String(boundText.text ?? "")) ||
-      (e.type === "text" ? String(e.text ?? "") : "") ||
+      (isText(e) ? String(e.text ?? "") : "") ||
       typeLabel(e.type);
 
     indexByKey.set(key, items.length);
