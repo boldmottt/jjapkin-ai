@@ -183,6 +183,20 @@ export const TYPE_INSTRUCTIONS: Record<DiagramType, string> = {
     "Convert this into a simple bullet-list style diagram. Items in vertical order. Use type:'process' for all nodes with subtle alternating background colors.",
   timeline:
     "Convert this into a chronological timeline. Order nodes by time (earliest first). Each node is an event/milestone with a date or phase in its label. Connect consecutive events with edges (n1→n2→n3...). Use type:'process' for events.",
+  "card-grid":
+    "Convert this into independent info cards (no edges). Each node is a self-contained card with a concise label. Good for features, benefits, key points.",
+  "framework-2x2":
+    "Convert this into a 2x2 matrix (quadrants), e.g. importance/urgency, effort/impact. Provide exactly 4 nodes ordered: top-left, top-right, bottom-left, bottom-right. No edges.",
+  pyramid:
+    "Convert this into a pyramid/hierarchy of levels, ordered top (apex) to bottom (base). Each node is a level. No edges. Good for needs hierarchies, layered architectures.",
+  funnel:
+    "Convert this into a conversion funnel, ordered top (widest, most) to bottom (narrowest, fewest). Each node is a stage. Optionally include a numeric 'value' per node. No edges.",
+  venn:
+    "Convert this into a Venn diagram of 2-3 overlapping sets. Each node is a set/circle. No edges. Good for shared/distinct concepts.",
+  "bar-chart":
+    "Convert this into a bar chart. Each node is a bar; include a numeric 'value' field per node for its magnitude. No edges. Order as given.",
+  swimlane:
+    "Convert this into swimlanes. Assign each node a 'group' (the lane, e.g. a team/role/phase). Nodes within a lane flow left-to-right in order. Use edges for hand-offs across lanes.",
 };
 
 // ── 빌더 함수 ──────────────────────────────────────

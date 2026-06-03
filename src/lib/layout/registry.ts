@@ -12,6 +12,13 @@ import { processLayout } from "./engines/process";
 import { comparisonLayout } from "./engines/comparison";
 import { listLayout } from "./engines/list";
 import { timelineLayout } from "./engines/timeline";
+import { cardGridLayout } from "./engines/card-grid";
+import { framework2x2Layout } from "./engines/framework-2x2";
+import { pyramidLayout } from "./engines/pyramid";
+import { funnelLayout } from "./engines/funnel";
+import { vennLayout } from "./engines/venn";
+import { barChartLayout } from "./engines/bar-chart";
+import { swimlaneLayout } from "./engines/swimlane";
 
 const REGISTRY = new Map<string, LayoutFn>([
   ["flowchart", flowchartLayout],
@@ -20,6 +27,13 @@ const REGISTRY = new Map<string, LayoutFn>([
   ["comparison", comparisonLayout],
   ["list", listLayout],
   ["timeline", timelineLayout],
+  ["card-grid", cardGridLayout],
+  ["framework-2x2", framework2x2Layout],
+  ["pyramid", pyramidLayout],
+  ["funnel", funnelLayout],
+  ["venn", vennLayout],
+  ["bar-chart", barChartLayout],
+  ["swimlane", swimlaneLayout],
 ]);
 
 /** 빈 레이아웃(미등록 타입의 폴백 — 과거 switch의 "default 없음=빈 배열" 동작 보존) */

@@ -16,6 +16,8 @@ const nodeSchema = z.object({
   label: z.string().min(1, "Node label is required").max(100),
   type: z.enum(["start", "process", "decision", "end"]).optional(),
   color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Invalid hex color").optional(),
+  value: z.number().finite().optional(), // bar-chart/funnel 수치
+  group: z.string().max(50).optional(), // swimlane 레인
 });
 
 const edgeSchema = z.object({

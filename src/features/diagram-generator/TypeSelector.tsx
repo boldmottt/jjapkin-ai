@@ -15,6 +15,13 @@ import {
   List,
   Network,
   Clock,
+  LayoutGrid,
+  Grid2x2,
+  Triangle,
+  Filter,
+  Circle,
+  BarChart3,
+  Rows3,
 } from "lucide-react";
 import type { DiagramType } from "@/types";
 import { DIAGRAM_TYPE_LABELS, DIAGRAM_TYPES } from "@/types";
@@ -26,6 +33,13 @@ const TYPE_ICONS: Record<DiagramType, typeof GitFork> = {
   comparison: ArrowLeftRight,
   list: List,
   timeline: Clock,
+  "card-grid": LayoutGrid,
+  "framework-2x2": Grid2x2,
+  pyramid: Triangle,
+  funnel: Filter,
+  venn: Circle,
+  "bar-chart": BarChart3,
+  swimlane: Rows3,
 };
 
 interface TypeSelectorProps {

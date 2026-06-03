@@ -34,6 +34,13 @@ const TYPES: DiagramType[] = [
   "comparison",
   "list",
   "timeline",
+  "card-grid",
+  "framework-2x2",
+  "pyramid",
+  "funnel",
+  "venn",
+  "bar-chart",
+  "swimlane",
 ];
 
 describe("레이아웃 골든 스냅샷", () => {
