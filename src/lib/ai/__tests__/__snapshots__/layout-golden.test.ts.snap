@@ -96,7 +96,7 @@ exports[`레이아웃 골든 스냅샷 > bar-chart 출력 고정 1`] = `
         "type": "arrow",
       },
       {
-        "id": "elem_11",
+        "id": "elem_12",
         "type": "arrow",
       },
     ],
@@ -135,7 +135,7 @@ exports[`레이아웃 골든 스냅샷 > bar-chart 출력 고정 1`] = `
         "type": "text",
       },
       {
-        "id": "elem_11",
+        "id": "elem_12",
         "type": "arrow",
       },
     ],
@@ -231,6 +231,24 @@ exports[`레이아웃 골든 스냅샷 > bar-chart 출력 고정 1`] = `
     "y": 280,
   },
   {
+    "backgroundColor": "#ffffff",
+    "boundElements": null,
+    "containerId": null,
+    "fontFamily": 2,
+    "fontSize": 12,
+    "height": 16,
+    "id": "elem_11",
+    "roughness": 0,
+    "strokeColor": "#6B7280",
+    "text": "예",
+    "textAlign": "center",
+    "type": "text",
+    "verticalAlign": "middle",
+    "width": 40,
+    "x": 274,
+    "y": 325.5,
+  },
+  {
     "boundElements": null,
     "endBinding": {
       "elementId": "elem_7",
@@ -238,7 +256,7 @@ exports[`레이아웃 골든 스냅샷 > bar-chart 출력 고정 1`] = `
       "gap": 4,
     },
     "height": 70,
-    "id": "elem_11",
+    "id": "elem_12",
     "points": [
       [
         0,
@@ -361,7 +379,7 @@ exports[`레이아웃 골든 스냅샷 > card-grid 출력 고정 1`] = `
         "type": "arrow",
       },
       {
-        "id": "elem_11",
+        "id": "elem_12",
         "type": "arrow",
       },
     ],
@@ -400,7 +418,7 @@ exports[`레이아웃 골든 스냅샷 > card-grid 출력 고정 1`] = `
         "type": "text",
       },
       {
-        "id": "elem_11",
+        "id": "elem_12",
         "type": "arrow",
       },
     ],
@@ -496,6 +514,24 @@ exports[`레이아웃 골든 스냅샷 > card-grid 출력 고정 1`] = `
     "y": 190,
   },
   {
+    "backgroundColor": "#ffffff",
+    "boundElements": null,
+    "containerId": null,
+    "fontFamily": 2,
+    "fontSize": 12,
+    "height": 16,
+    "id": "elem_11",
+    "roughness": 0,
+    "strokeColor": "#6B7280",
+    "text": "예",
+    "textAlign": "center",
+    "type": "text",
+    "verticalAlign": "middle",
+    "width": 40,
+    "x": 296,
+    "y": 199,
+  },
+  {
     "boundElements": null,
     "endBinding": {
       "elementId": "elem_7",
@@ -503,7 +539,7 @@ exports[`레이아웃 골든 스냅샷 > card-grid 출력 고정 1`] = `
       "gap": 4,
     },
     "height": 110,
-    "id": "elem_11",
+    "id": "elem_12",
     "points": [
       [
         0,
@@ -583,7 +619,7 @@ exports[`레이아웃 골든 스냅샷 > comparison 출력 고정 1`] = `
         "type": "arrow",
       },
       {
-        "id": "elem_11",
+        "id": "elem_12",
         "type": "arrow",
       },
     ],
@@ -665,7 +701,7 @@ exports[`레이아웃 골든 스냅샷 > comparison 출력 고정 1`] = `
         "type": "text",
       },
       {
-        "id": "elem_11",
+        "id": "elem_12",
         "type": "arrow",
       },
     ],
@@ -761,6 +797,24 @@ exports[`레이아웃 골든 스냅샷 > comparison 출력 고정 1`] = `
     "y": 140,
   },
   {
+    "backgroundColor": "#ffffff",
+    "boundElements": null,
+    "containerId": null,
+    "fontFamily": 2,
+    "fontSize": 12,
+    "height": 16,
+    "id": "elem_11",
+    "roughness": 0,
+    "strokeColor": "#6B7280",
+    "text": "예",
+    "textAlign": "center",
+    "type": "text",
+    "verticalAlign": "middle",
+    "width": 40,
+    "x": 385,
+    "y": 163,
+  },
+  {
     "boundElements": null,
     "endBinding": {
       "elementId": "elem_7",
@@ -768,7 +822,7 @@ exports[`레이아웃 골든 스냅샷 > comparison 출력 고정 1`] = `
       "gap": 4,
     },
     "height": 60,
-    "id": "elem_11",
+    "id": "elem_12",
     "points": [
       [
         0,
@@ -891,7 +945,7 @@ exports[`레이아웃 골든 스냅샷 > flowchart 출력 고정 1`] = `
         "type": "arrow",
       },
       {
-        "id": "elem_11",
+        "id": "elem_12",
         "type": "arrow",
       },
     ],
@@ -930,7 +984,7 @@ exports[`레이아웃 골든 스냅샷 > flowchart 출력 고정 1`] = `
         "type": "text",
       },
       {
-        "id": "elem_11",
+        "id": "elem_12",
         "type": "arrow",
       },
     ],
@@ -1026,6 +1080,24 @@ exports[`레이아웃 골든 스냅샷 > flowchart 출력 고정 1`] = `
     "y": 260,
   },
   {
+    "backgroundColor": "#ffffff",
+    "boundElements": null,
+    "containerId": null,
+    "fontFamily": 2,
+    "fontSize": 12,
+    "height": 16,
+    "id": "elem_11",
+    "roughness": 0,
+    "strokeColor": "#6B7280",
+    "text": "예",
+    "textAlign": "center",
+    "type": "text",
+    "verticalAlign": "middle",
+    "width": 40,
+    "x": 460,
+    "y": 283,
+  },
+  {
     "boundElements": null,
     "endBinding": {
       "elementId": "elem_7",
@@ -1033,7 +1105,7 @@ exports[`레이아웃 골든 스냅샷 > flowchart 출력 고정 1`] = `
       "gap": 4,
     },
     "height": 60,
-    "id": "elem_11",
+    "id": "elem_12",
     "points": [
       [
         0,
@@ -1156,7 +1228,7 @@ exports[`레이아웃 골든 스냅샷 > framework-2x2 출력 고정 1`] = `
         "type": "arrow",
       },
       {
-        "id": "elem_11",
+        "id": "elem_12",
         "type": "arrow",
       },
     ],
@@ -1195,7 +1267,7 @@ exports[`레이아웃 골든 스냅샷 > framework-2x2 출력 고정 1`] = `
         "type": "text",
       },
       {
-        "id": "elem_11",
+        "id": "elem_12",
         "type": "arrow",
       },
     ],
@@ -1291,6 +1363,24 @@ exports[`레이아웃 골든 스냅샷 > framework-2x2 출력 고정 1`] = `
     "y": 220,
   },
   {
+    "backgroundColor": "#ffffff",
+    "boundElements": null,
+    "containerId": null,
+    "fontFamily": 2,
+    "fontSize": 12,
+    "height": 16,
+    "id": "elem_11",
+    "roughness": 0,
+    "strokeColor": "#6B7280",
+    "text": "예",
+    "textAlign": "center",
+    "type": "text",
+    "verticalAlign": "middle",
+    "width": 40,
+    "x": 308,
+    "y": 221,
+  },
+  {
     "boundElements": null,
     "endBinding": {
       "elementId": "elem_7",
@@ -1298,7 +1388,7 @@ exports[`레이아웃 골든 스냅샷 > framework-2x2 출력 고정 1`] = `
       "gap": 4,
     },
     "height": 140,
-    "id": "elem_11",
+    "id": "elem_12",
     "points": [
       [
         0,
@@ -1421,7 +1511,7 @@ exports[`레이아웃 골든 스냅샷 > funnel 출력 고정 1`] = `
         "type": "arrow",
       },
       {
-        "id": "elem_11",
+        "id": "elem_12",
         "type": "arrow",
       },
     ],
@@ -1460,7 +1550,7 @@ exports[`레이아웃 골든 스냅샷 > funnel 출력 고정 1`] = `
         "type": "text",
       },
       {
-        "id": "elem_11",
+        "id": "elem_12",
         "type": "arrow",
       },
     ],
@@ -1556,6 +1646,24 @@ exports[`레이아웃 골든 스냅샷 > funnel 출력 고정 1`] = `
     "y": 220,
   },
   {
+    "backgroundColor": "#ffffff",
+    "boundElements": null,
+    "containerId": null,
+    "fontFamily": 2,
+    "fontSize": 12,
+    "height": 16,
+    "id": "elem_11",
+    "roughness": 0,
+    "strokeColor": "#6B7280",
+    "text": "예",
+    "textAlign": "center",
+    "type": "text",
+    "verticalAlign": "middle",
+    "width": 40,
+    "x": 380,
+    "y": 219,
+  },
+  {
     "boundElements": null,
     "endBinding": {
       "elementId": "elem_7",
@@ -1563,7 +1671,7 @@ exports[`레이아웃 골든 스냅샷 > funnel 출력 고정 1`] = `
       "gap": 4,
     },
     "height": 12,
-    "id": "elem_11",
+    "id": "elem_12",
     "points": [
       [
         0,
@@ -1686,7 +1794,7 @@ exports[`레이아웃 골든 스냅샷 > list 출력 고정 1`] = `
         "type": "arrow",
       },
       {
-        "id": "elem_11",
+        "id": "elem_12",
         "type": "arrow",
       },
     ],
@@ -1725,7 +1833,7 @@ exports[`레이아웃 골든 스냅샷 > list 출력 고정 1`] = `
         "type": "text",
       },
       {
-        "id": "elem_11",
+        "id": "elem_12",
         "type": "arrow",
       },
     ],
@@ -1821,6 +1929,24 @@ exports[`레이아웃 골든 스냅샷 > list 출력 고정 1`] = `
     "y": 260,
   },
   {
+    "backgroundColor": "#ffffff",
+    "boundElements": null,
+    "containerId": null,
+    "fontFamily": 2,
+    "fontSize": 12,
+    "height": 16,
+    "id": "elem_11",
+    "roughness": 0,
+    "strokeColor": "#6B7280",
+    "text": "예",
+    "textAlign": "center",
+    "type": "text",
+    "verticalAlign": "middle",
+    "width": 40,
+    "x": 310,
+    "y": 283,
+  },
+  {
     "boundElements": null,
     "endBinding": {
       "elementId": "elem_7",
@@ -1828,7 +1954,7 @@ exports[`레이아웃 골든 스냅샷 > list 출력 고정 1`] = `
       "gap": 4,
     },
     "height": 60,
-    "id": "elem_11",
+    "id": "elem_12",
     "points": [
       [
         0,
@@ -1951,7 +2077,7 @@ exports[`레이아웃 골든 스냅샷 > mindmap 출력 고정 1`] = `
         "type": "arrow",
       },
       {
-        "id": "elem_11",
+        "id": "elem_12",
         "type": "arrow",
       },
     ],
@@ -1990,7 +2116,7 @@ exports[`레이아웃 골든 스냅샷 > mindmap 출력 고정 1`] = `
         "type": "text",
       },
       {
-        "id": "elem_11",
+        "id": "elem_12",
         "type": "arrow",
       },
     ],
@@ -2086,6 +2212,24 @@ exports[`레이아웃 골든 스냅샷 > mindmap 출력 고정 1`] = `
     "y": 150,
   },
   {
+    "backgroundColor": "#ffffff",
+    "boundElements": null,
+    "containerId": null,
+    "fontFamily": 2,
+    "fontSize": 12,
+    "height": 16,
+    "id": "elem_11",
+    "roughness": 0,
+    "strokeColor": "#6B7280",
+    "text": "예",
+    "textAlign": "center",
+    "type": "text",
+    "verticalAlign": "middle",
+    "width": 40,
+    "x": 457.9422863405995,
+    "y": 248,
+  },
+  {
     "boundElements": null,
     "endBinding": {
       "elementId": "elem_7",
@@ -2093,7 +2237,7 @@ exports[`레이아웃 골든 스냅샷 > mindmap 출력 고정 1`] = `
       "gap": 4,
     },
     "height": 59.99999999999994,
-    "id": "elem_11",
+    "id": "elem_12",
     "points": [
       [
         311.7691453623979,
@@ -2216,7 +2360,7 @@ exports[`레이아웃 골든 스냅샷 > process 출력 고정 1`] = `
         "type": "arrow",
       },
       {
-        "id": "elem_11",
+        "id": "elem_12",
         "type": "arrow",
       },
     ],
@@ -2255,7 +2399,7 @@ exports[`레이아웃 골든 스냅샷 > process 출력 고정 1`] = `
         "type": "text",
       },
       {
-        "id": "elem_11",
+        "id": "elem_12",
         "type": "arrow",
       },
     ],
@@ -2351,6 +2495,24 @@ exports[`레이아웃 골든 스냅샷 > process 출력 고정 1`] = `
     "y": 270,
   },
   {
+    "backgroundColor": "#ffffff",
+    "boundElements": null,
+    "containerId": null,
+    "fontFamily": 2,
+    "fontSize": 12,
+    "height": 16,
+    "id": "elem_11",
+    "roughness": 0,
+    "strokeColor": "#6B7280",
+    "text": "예",
+    "textAlign": "center",
+    "type": "text",
+    "verticalAlign": "middle",
+    "width": 40,
+    "x": 520,
+    "y": 293,
+  },
+  {
     "boundElements": null,
     "endBinding": {
       "elementId": "elem_7",
@@ -2358,7 +2520,7 @@ exports[`레이아웃 골든 스냅샷 > process 출력 고정 1`] = `
       "gap": 4,
     },
     "height": 60,
-    "id": "elem_11",
+    "id": "elem_12",
     "points": [
       [
         0,
@@ -2481,7 +2643,7 @@ exports[`레이아웃 골든 스냅샷 > pyramid 출력 고정 1`] = `
         "type": "arrow",
       },
       {
-        "id": "elem_11",
+        "id": "elem_12",
         "type": "arrow",
       },
     ],
@@ -2520,7 +2682,7 @@ exports[`레이아웃 골든 스냅샷 > pyramid 출력 고정 1`] = `
         "type": "text",
       },
       {
-        "id": "elem_11",
+        "id": "elem_12",
         "type": "arrow",
       },
     ],
@@ -2616,6 +2778,24 @@ exports[`레이아웃 골든 스냅샷 > pyramid 출력 고정 1`] = `
     "y": 220,
   },
   {
+    "backgroundColor": "#ffffff",
+    "boundElements": null,
+    "containerId": null,
+    "fontFamily": 2,
+    "fontSize": 12,
+    "height": 16,
+    "id": "elem_11",
+    "roughness": 0,
+    "strokeColor": "#6B7280",
+    "text": "예",
+    "textAlign": "center",
+    "type": "text",
+    "verticalAlign": "middle",
+    "width": 40,
+    "x": 380,
+    "y": 219,
+  },
+  {
     "boundElements": null,
     "endBinding": {
       "elementId": "elem_7",
@@ -2623,7 +2803,7 @@ exports[`레이아웃 골든 스냅샷 > pyramid 출력 고정 1`] = `
       "gap": 4,
     },
     "height": 12,
-    "id": "elem_11",
+    "id": "elem_12",
     "points": [
       [
         0,
@@ -2746,7 +2926,7 @@ exports[`레이아웃 골든 스냅샷 > swimlane 출력 고정 1`] = `
         "type": "arrow",
       },
       {
-        "id": "elem_11",
+        "id": "elem_12",
         "type": "arrow",
       },
     ],
@@ -2785,7 +2965,7 @@ exports[`레이아웃 골든 스냅샷 > swimlane 출력 고정 1`] = `
         "type": "text",
       },
       {
-        "id": "elem_11",
+        "id": "elem_12",
         "type": "arrow",
       },
     ],
@@ -2881,6 +3061,24 @@ exports[`레이아웃 골든 스냅샷 > swimlane 출력 고정 1`] = `
     "y": 260,
   },
   {
+    "backgroundColor": "#ffffff",
+    "boundElements": null,
+    "containerId": null,
+    "fontFamily": 2,
+    "fontSize": 12,
+    "height": 16,
+    "id": "elem_11",
+    "roughness": 0,
+    "strokeColor": "#6B7280",
+    "text": "예",
+    "textAlign": "center",
+    "type": "text",
+    "verticalAlign": "middle",
+    "width": 40,
+    "x": 160,
+    "y": 283,
+  },
+  {
     "boundElements": null,
     "endBinding": {
       "elementId": "elem_7",
@@ -2888,7 +3086,7 @@ exports[`레이아웃 골든 스냅샷 > swimlane 출력 고정 1`] = `
       "gap": 4,
     },
     "height": 60,
-    "id": "elem_11",
+    "id": "elem_12",
     "points": [
       [
         0,
@@ -3011,7 +3209,7 @@ exports[`레이아웃 골든 스냅샷 > timeline 출력 고정 1`] = `
         "type": "arrow",
       },
       {
-        "id": "elem_11",
+        "id": "elem_12",
         "type": "arrow",
       },
     ],
@@ -3050,7 +3248,7 @@ exports[`레이아웃 골든 스냅샷 > timeline 출력 고정 1`] = `
         "type": "text",
       },
       {
-        "id": "elem_11",
+        "id": "elem_12",
         "type": "arrow",
       },
     ],
@@ -3146,6 +3344,24 @@ exports[`레이아웃 골든 스냅샷 > timeline 출력 고정 1`] = `
     "y": 150,
   },
   {
+    "backgroundColor": "#ffffff",
+    "boundElements": null,
+    "containerId": null,
+    "fontFamily": 2,
+    "fontSize": 12,
+    "height": 16,
+    "id": "elem_11",
+    "roughness": 0,
+    "strokeColor": "#6B7280",
+    "text": "예",
+    "textAlign": "center",
+    "type": "text",
+    "verticalAlign": "middle",
+    "width": 40,
+    "x": 520,
+    "y": 273,
+  },
+  {
     "boundElements": null,
     "endBinding": {
       "elementId": "elem_7",
@@ -3153,7 +3369,7 @@ exports[`레이아웃 골든 스냅샷 > timeline 출력 고정 1`] = `
       "gap": 4,
     },
     "height": 140,
-    "id": "elem_11",
+    "id": "elem_12",
     "points": [
       [
         0,
@@ -3276,7 +3492,7 @@ exports[`레이아웃 골든 스냅샷 > venn 출력 고정 1`] = `
         "type": "arrow",
       },
       {
-        "id": "elem_11",
+        "id": "elem_12",
         "type": "arrow",
       },
     ],
@@ -3315,7 +3531,7 @@ exports[`레이아웃 골든 스냅샷 > venn 출력 고정 1`] = `
         "type": "text",
       },
       {
-        "id": "elem_11",
+        "id": "elem_12",
         "type": "arrow",
       },
     ],
@@ -3411,6 +3627,24 @@ exports[`레이아웃 골든 스냅샷 > venn 출력 고정 1`] = `
     "y": 223,
   },
   {
+    "backgroundColor": "#ffffff",
+    "boundElements": null,
+    "containerId": null,
+    "fontFamily": 2,
+    "fontSize": 12,
+    "height": 16,
+    "id": "elem_11",
+    "roughness": 0,
+    "strokeColor": "#6B7280",
+    "text": "예",
+    "textAlign": "center",
+    "type": "text",
+    "verticalAlign": "middle",
+    "width": 40,
+    "x": 415.75,
+    "y": 254.5,
+  },
+  {
     "boundElements": null,
     "endBinding": {
       "elementId": "elem_7",
@@ -3418,7 +3652,7 @@ exports[`레이아웃 골든 스냅샷 > venn 출력 고정 1`] = `
       "gap": 4,
     },
     "height": 77,
-    "id": "elem_11",
+    "id": "elem_12",
     "points": [
       [
         200,
@@ -3502,11 +3736,11 @@ exports[`레이아웃 골든 스냅샷 > 분기+사이클 플로우차트 출력
         "type": "arrow",
       },
       {
-        "id": "elem_13",
+        "id": "elem_14",
         "type": "arrow",
       },
       {
-        "id": "elem_15",
+        "id": "elem_17",
         "type": "arrow",
       },
     ],
@@ -3549,7 +3783,7 @@ exports[`레이아웃 골든 스냅샷 > 분기+사이클 플로우차트 출력
         "type": "arrow",
       },
       {
-        "id": "elem_14",
+        "id": "elem_16",
         "type": "arrow",
       },
     ],
@@ -3588,11 +3822,11 @@ exports[`레이아웃 골든 스냅샷 > 분기+사이클 플로우차트 출력
         "type": "text",
       },
       {
-        "id": "elem_13",
+        "id": "elem_14",
         "type": "arrow",
       },
       {
-        "id": "elem_15",
+        "id": "elem_17",
         "type": "arrow",
       },
     ],
@@ -3631,7 +3865,7 @@ exports[`레이아웃 골든 스냅샷 > 분기+사이클 플로우차트 출력
         "type": "text",
       },
       {
-        "id": "elem_14",
+        "id": "elem_16",
         "type": "arrow",
       },
     ],
@@ -3727,6 +3961,24 @@ exports[`레이아웃 골든 스냅샷 > 분기+사이클 플로우차트 출력
     "y": 200,
   },
   {
+    "backgroundColor": "#ffffff",
+    "boundElements": null,
+    "containerId": null,
+    "fontFamily": 2,
+    "fontSize": 12,
+    "height": 16,
+    "id": "elem_13",
+    "roughness": 0,
+    "strokeColor": "#6B7280",
+    "text": "예",
+    "textAlign": "center",
+    "type": "text",
+    "verticalAlign": "middle",
+    "width": 40,
+    "x": 220,
+    "y": 223,
+  },
+  {
     "boundElements": null,
     "endBinding": {
       "elementId": "elem_7",
@@ -3734,7 +3986,7 @@ exports[`레이아웃 골든 스냅샷 > 분기+사이클 플로우차트 출력
       "gap": 4,
     },
     "height": 60,
-    "id": "elem_13",
+    "id": "elem_14",
     "points": [
       [
         0,
@@ -3759,6 +4011,24 @@ exports[`레이아웃 골든 스냅샷 > 분기+사이클 플로우차트 출력
     "y": 200,
   },
   {
+    "backgroundColor": "#ffffff",
+    "boundElements": null,
+    "containerId": null,
+    "fontFamily": 2,
+    "fontSize": 12,
+    "height": 16,
+    "id": "elem_15",
+    "roughness": 0,
+    "strokeColor": "#6B7280",
+    "text": "아니오",
+    "textAlign": "center",
+    "type": "text",
+    "verticalAlign": "middle",
+    "width": 40,
+    "x": 340,
+    "y": 223,
+  },
+  {
     "boundElements": null,
     "endBinding": {
       "elementId": "elem_9",
@@ -3766,7 +4036,7 @@ exports[`레이아웃 골든 스냅샷 > 분기+사이클 플로우차트 출력
       "gap": 4,
     },
     "height": 60,
-    "id": "elem_14",
+    "id": "elem_16",
     "points": [
       [
         0,
@@ -3798,7 +4068,7 @@ exports[`레이아웃 골든 스냅샷 > 분기+사이클 플로우차트 출력
       "gap": 4,
     },
     "height": 60,
-    "id": "elem_15",
+    "id": "elem_17",
     "points": [
       [
         480,
@@ -3821,6 +4091,24 @@ exports[`레이아웃 골든 스냅샷 > 분기+사이클 플로우차트 출력
     "width": 480,
     "x": 120,
     "y": 200,
+  },
+  {
+    "backgroundColor": "#ffffff",
+    "boundElements": null,
+    "containerId": null,
+    "fontFamily": 2,
+    "fontSize": 12,
+    "height": 16,
+    "id": "elem_18",
+    "roughness": 0,
+    "strokeColor": "#6B7280",
+    "text": "재시도",
+    "textAlign": "center",
+    "type": "text",
+    "verticalAlign": "middle",
+    "width": 40,
+    "x": 340,
+    "y": 223,
   },
 ]
 `;

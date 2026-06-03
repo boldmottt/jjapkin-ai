@@ -23,6 +23,7 @@ const nodeSchema = z.object({
     .regex(/^([a-z0-9-]+:)?[a-z0-9-]+$/, "Invalid icon id")
     .max(60)
     .optional(), // lucide 아이콘 id
+  emphasis: z.enum(["none", "highlight", "badge"]).optional(),
 });
 
 const edgeSchema = z.object({

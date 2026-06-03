@@ -57,6 +57,10 @@ Icons (optional but recommended):
   e.g. "icon":"rocket", "credit-card", "shield-check", "users", "database".
 - Pick an icon that matches the node's meaning. Omit if unsure.
 
+Emphasis (optional):
+- Add "emphasis":"highlight" to draw attention to a key node (bold accent border),
+  or "emphasis":"badge" to mark it with a small badge. Use sparingly (0-2 nodes).
+
 Color suggestions per diagram type:
 - flowchart: blue process nodes, green start, red end, orange decisions
 - mindmap: root node darker, children lighter tones

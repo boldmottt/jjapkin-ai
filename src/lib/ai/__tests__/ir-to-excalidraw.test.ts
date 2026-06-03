@@ -21,9 +21,9 @@ const mockIR: DiagramIR = {
 };
 
 describe("irToExcalidraw", () => {
-  it("flowchart: 노드 3개 + 엣지 2개 → 8개 요소 (rect×3 + text×3 + arrow×2)", () => {
+  it("flowchart: 노드 3개 + 엣지 2개(라벨 1) → 9개 (rect×3 + text×3 + arrow×2 + 라벨×1)", () => {
     const elements = irToExcalidraw(mockIR);
-    expect(elements).toHaveLength(8);
+    expect(elements).toHaveLength(9);
   });
 
   it("flowchart: rect 요소가 올바른 type을 가짐", () => {
@@ -32,10 +32,12 @@ describe("irToExcalidraw", () => {
     expect(rects).toHaveLength(3);
   });
 
-  it("flowchart: text 요소가 label을 포함", () => {
+  it("flowchart: text 요소가 노드 라벨 + 엣지 라벨 포함", () => {
     const elements = irToExcalidraw(mockIR);
     const texts = elements.filter((e) => e.type === "text");
-    expect(texts).toHaveLength(3);
+    // 노드 텍스트 3 + 엣지 라벨("done") 1
+    expect(texts).toHaveLength(4);
+    expect(texts.some((t) => t.text === "done")).toBe(true);
   });
 
   it("flowchart: arrow 요소가 올바른 type을 가짐", () => {

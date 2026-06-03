@@ -37,17 +37,24 @@ export function irToExcalidraw(ir: DiagramIR): ExElement[] {
 
   // node id → rectangle element id (화살표 바인딩에 사용)
   const rectIdByNode = new Map<string, ExElement>();
+  const nodeById = new Map(ir.nodes.map((n) => [n.id, n]));
 
   for (const pos of nodePositions) {
+    const node = nodeById.get(pos.id);
     const rect = createRectElement(pos, uid);
+    applyEmphasis(rect, node?.emphasis);
     const text = createTextElement(pos, rect.id, uid);
     // 텍스트를 도형에 컨테이너 바운드로 연결 → 도형 이동 시 텍스트가 따라감
     rect.boundElements = [{ id: text.id, type: "text" }];
     rectIdByNode.set(pos.id, rect);
     elements.push(rect, text);
+    // badge 강조: 우상단 작은 원
+    if (node?.emphasis === "badge") {
+      elements.push(createBadge(pos, uid));
+    }
   }
 
-  // 각 엣지 → arrow (양 끝 도형에 바인딩)
+  // 각 엣지 → arrow (양 끝 도형에 바인딩) + (있으면) 라벨 텍스트
   for (const edge of ir.edges) {
     const fromPos = nodePositions.find((n) => n.id === edge.from);
     const toPos = nodePositions.find((n) => n.id === edge.to);
@@ -61,13 +68,17 @@ export function irToExcalidraw(ir: DiagramIR): ExElement[] {
       uid,
       fromRect?.id,
       toRect?.id,
-      edge.label,
     );
     elements.push(arrow);
 
     // 화살표를 양 끝 도형의 boundElements에 등록 → 노드 이동 시 화살표가 따라붙음
     fromRect?.boundElements?.push({ id: arrow.id, type: "arrow" });
     toRect?.boundElements?.push({ id: arrow.id, type: "arrow" });
+
+    // 엣지 라벨 → 화살표 중간 지점에 독립 텍스트
+    if (edge.label) {
+      elements.push(createEdgeLabel(fromPos, toPos, edge.label, uid));
+    }
   }
 
   return elements;
@@ -183,11 +194,6 @@ function createArrowElement(
   uid: () => string,
   fromId: string | undefined,
   toId: string | undefined,
-  /**
-   * label은 향후 edge 라벨 렌더링에 사용 예정
-   */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _label?: string,
 ): ExElement {
   const fromX = from.x + (from.w ?? NODE_W) / 2;
   const fromY = from.y + (from.h ?? NODE_H);
@@ -211,6 +217,72 @@ function createArrowElement(
       [fromX - Math.min(fromX, toX), fromY - Math.min(fromY, toY)],
       [toX - Math.min(fromX, toX), toY - Math.min(fromY, toY)],
     ],
+    boundElements: null,
+  };
+}
+
+// ── 데코레이터 / 엣지 라벨 ──────────────────────────
+
+const HIGHLIGHT_COLOR = "#F59E0B";
+
+/** 강조(highlight): 두꺼운 강조색 테두리 */
+function applyEmphasis(rect: ExElement, emphasis?: string): void {
+  if (emphasis === "highlight") {
+    rect.strokeColor = HIGHLIGHT_COLOR;
+    rect.strokeWidth = 4;
+  }
+}
+
+/** 강조(badge): 도형 우상단의 작은 강조색 원 */
+function createBadge(pos: NodePosition, uid: () => string): ExElement {
+  const w = pos.w ?? NODE_W;
+  const r = 12;
+  return {
+    type: "ellipse",
+    id: uid(),
+    x: pos.x + w - r,
+    y: pos.y - r,
+    width: r * 2,
+    height: r * 2,
+    backgroundColor: HIGHLIGHT_COLOR,
+    strokeColor: "#ffffff",
+    strokeWidth: 2,
+    fillStyle: "solid",
+    roughness: 0,
+    boundElements: null,
+  };
+}
+
+/** 엣지 라벨: 두 노드 중간 지점의 독립 텍스트(흰 배경으로 화살표 위에 가독) */
+function createEdgeLabel(
+  from: NodePosition,
+  to: NodePosition,
+  label: string,
+  uid: () => string,
+): ExElement {
+  const fromCx = from.x + (from.w ?? NODE_W) / 2;
+  const fromCy = from.y + (from.h ?? NODE_H) / 2;
+  const toCx = to.x + (to.w ?? NODE_W) / 2;
+  const toCy = to.y + (to.h ?? NODE_H) / 2;
+  const midX = (fromCx + toCx) / 2;
+  const midY = (fromCy + toCy) / 2;
+  const width = Math.max(40, label.length * 8);
+  return {
+    type: "text",
+    id: uid(),
+    x: midX - width / 2,
+    y: midY - (FONT_SIZE - 2) / 2,
+    width,
+    height: FONT_SIZE,
+    text: label,
+    fontSize: FONT_SIZE - 4,
+    fontFamily: FONT_FAMILY,
+    strokeColor: "#6B7280",
+    backgroundColor: "#ffffff",
+    roughness: 0,
+    textAlign: "center",
+    verticalAlign: "middle",
+    containerId: null,
     boundElements: null,
   };
 }

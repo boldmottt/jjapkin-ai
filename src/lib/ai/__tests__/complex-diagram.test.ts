@@ -135,12 +135,15 @@ describe("복잡한 다이어그램 생성", () => {
     // eslint-disable-next-line no-console
     console.log("[복잡 플로우차트] 리포트:", JSON.stringify(r, null, 2));
 
-    expect(r.rects).toBe(12);
-    expect(r.texts).toBe(12);
-    expect(r.arrows).toBe(12);
-    expect(r.total).toBe(36); // 12 + 12 + 12
+    const labeledEdges = complexFlow.edges.filter((e) => e.label).length;
 
-    // 모든 텍스트가 컨테이너에 정상 바운드
+    expect(r.rects).toBe(12);
+    expect(r.arrows).toBe(12);
+    // 노드 텍스트 12개 + 엣지 라벨 텍스트(라벨 있는 엣지 수)
+    expect(r.texts).toBe(12 + labeledEdges);
+    expect(r.total).toBe(36 + labeledEdges); // 12 rect + 12 arrow + (12+라벨) text
+
+    // 모든 노드 텍스트가 컨테이너에 정상 바운드(엣지 라벨은 독립 텍스트)
     expect(r.boundTexts).toBe(12);
     expect(r.danglingTextRefs).toEqual([]);
 

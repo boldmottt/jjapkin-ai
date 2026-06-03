@@ -47,6 +47,7 @@ export interface DiagramNode {
   value?: number; // bar-chart/funnel 등 크기/수치 표현
   group?: string; // swimlane 등 그룹/레인 분류
   icon?: string; // lucide 아이콘 id (예: "lucide:rocket")
+  emphasis?: "none" | "highlight" | "badge"; // 강조 데코레이터
 }
 
 /** AI가 생성하는 엣지 */
