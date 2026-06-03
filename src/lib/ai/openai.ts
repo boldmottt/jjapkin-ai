@@ -210,7 +210,42 @@ function splitDataUrl(dataUrl: string): { mediaType: string; base64: string } {
 export async function chatCompletionVision(
   opts: VisionOptions,
 ): Promise<ChatCompletionResult> {
-  // 1차: OpenAI 비전
+  // 1차: DeepSeek 비전 (OpenAI 호환 image_url 형식)
+  // deepseek-chat이 이미지를 거부하면 아래 OpenAI/Anthropic으로 폴백된다.
+  try {
+    const client = getDeepSeekClient();
+    const response = await client.chat.completions.create({
+      model: env.DEEPSEEK_VISION_MODEL,
+      max_tokens: opts.maxTokens ?? 2000,
+      temperature: 0.3,
+      messages: [
+        { role: "system", content: opts.systemPrompt },
+        {
+          role: "user",
+          content: [
+            { type: "text", text: opts.userMessage },
+            { type: "image_url", image_url: { url: opts.imageDataUrl } },
+          ],
+        },
+      ],
+      ...(opts.responseFormat === "json"
+        ? { response_format: { type: "json_object" } }
+        : {}),
+    });
+    const choice = response.choices[0];
+    if (choice?.message?.content) {
+      return {
+        content: choice.message.content,
+        model: response.model,
+        tokensInput: response.usage?.prompt_tokens ?? 0,
+        tokensOutput: response.usage?.completion_tokens ?? 0,
+      };
+    }
+  } catch (e) {
+    console.warn("[ai] DeepSeek vision failed:", (e as Error).message);
+  }
+
+  // 2차: OpenAI 비전
   const openaiClient = getOpenAIClient();
   if (openaiClient) {
     try {
@@ -246,7 +281,7 @@ export async function chatCompletionVision(
     }
   }
 
-  // 2차: Anthropic 비전
+  // 3차: Anthropic 비전
   if (hasAnthropicKey()) {
     try {
       const { default: Anthropic } = await import("@anthropic-ai/sdk");
@@ -288,6 +323,6 @@ export async function chatCompletionVision(
   }
 
   throw new Error(
-    "비전(이미지) 변환은 OpenAI 또는 Anthropic API 키가 필요합니다.",
+    "비전(이미지) 변환에 모든 제공자가 실패했습니다 (DeepSeek → OpenAI → Anthropic). DeepSeek 비전 모델 미지원 시 OPENAI_API_KEY 또는 ANTHROPIC_API_KEY가 필요합니다.",
   );
 }

@@ -64,7 +64,7 @@ export async function POST(request: Request) {
   } catch (error) {
     const message = (error as Error).message;
     console.error(`[image] FAIL (${Date.now() - startTime}ms):`, message);
-    if (message.includes("API 키가 필요")) {
+    if (message.includes("비전(이미지) 변환")) {
       return err(400, "VISION_UNAVAILABLE", message);
     }
     return err(500, "IMAGE_FAILED", "이미지에서 다이어그램을 만들지 못했습니다. 더 또렷한 이미지를 시도해보세요.");

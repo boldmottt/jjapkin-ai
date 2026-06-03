@@ -14,6 +14,9 @@ const envSchema = z.object({
   DEEPSEEK_API_KEY: z.string().min(1),
   DEEPSEEK_BASE_URL: z.string().default("https://api.deepseek.com"),
   DEEPSEEK_MODEL: z.string().default("deepseek-chat"),
+  // DeepSeek 비전 모델 (이미지→다이어그램). 기본은 chat 모델과 동일하게 두되
+  // 비전 전용 모델이 있으면 이 값으로 지정한다.
+  DEEPSEEK_VISION_MODEL: z.string().default("deepseek-chat"),
   // OpenAI (대체)
   OPENAI_API_KEY: z.string().optional(),
   // Anthropic (대체)
@@ -35,6 +38,7 @@ function loadAndValidate(): Env {
     DEEPSEEK_API_KEY: process.env.DEEPSEEK_API_KEY,
     DEEPSEEK_BASE_URL: process.env.DEEPSEEK_BASE_URL,
     DEEPSEEK_MODEL: process.env.DEEPSEEK_MODEL,
+    DEEPSEEK_VISION_MODEL: process.env.DEEPSEEK_VISION_MODEL,
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
     ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
     DATABASE_URL: process.env.DATABASE_URL,
