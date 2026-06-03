@@ -19,6 +19,7 @@ Given text, you must:
    - step-by-step with stages → "process"
    - comparing A vs B / multiple items → "comparison"
    - simple enumeration → "list"
+   - chronological events / history / milestones → "timeline"
 3. Output a valid JSON structure that describes nodes and edges.
 
 Rules:
@@ -180,6 +181,8 @@ export const TYPE_INSTRUCTIONS: Record<DiagramType, string> = {
     "Convert this into a comparison table layout. Group items by category. Use alternating colors for left/right columns. Use type:'process' for all nodes.",
   list:
     "Convert this into a simple bullet-list style diagram. Items in vertical order. Use type:'process' for all nodes with subtle alternating background colors.",
+  timeline:
+    "Convert this into a chronological timeline. Order nodes by time (earliest first). Each node is an event/milestone with a date or phase in its label. Connect consecutive events with edges (n1→n2→n3...). Use type:'process' for events.",
 };
 
 // ── 빌더 함수 ──────────────────────────────────────

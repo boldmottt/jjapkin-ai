@@ -139,6 +139,14 @@ export function inferDiagramType(text: string): DiagramType {
   if (/(compare|비교|\bvs\b|대비|difference|차이점|장단점|장점\s*단점)/.test(lower)) {
     return "comparison";
   }
+  // 5. 타임라인: 연대/시간순 (연도·날짜·역사)
+  if (
+    /(timeline|연대|연혁|타임라인|history of|\b\d{4}년\b|\b(19|20)\d{2}\b.*\b(19|20)\d{2}\b|시간\s*순|연도별)/.test(
+      lower,
+    )
+  ) {
+    return "timeline";
+  }
 
   return "flowchart"; // 기본값
 }

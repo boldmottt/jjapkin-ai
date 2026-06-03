@@ -14,6 +14,13 @@ export interface NodePosition {
   color: string;
   x: number;
   y: number;
+  /** 도형 종류 힌트(미지정 시 어댑터가 rectangle). 예: ellipse, diamond */
+  shape?: "rectangle" | "ellipse" | "diamond";
+  /** 노드별 크기 오버라이드(미지정 시 기본 NODE_W/NODE_H) */
+  w?: number;
+  h?: number;
+  /** 텍스트 색 오버라이드(미지정 시 어댑터 기본 #1F2937) */
+  textColor?: string;
 }
 
 export type LayoutFn = (

@@ -33,6 +33,7 @@ const TYPES: DiagramType[] = [
   "process",
   "comparison",
   "list",
+  "timeline",
 ];
 
 describe("레이아웃 골든 스냅샷", () => {

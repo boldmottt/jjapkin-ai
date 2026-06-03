@@ -11,6 +11,7 @@ import { mindmapLayout } from "./engines/mindmap";
 import { processLayout } from "./engines/process";
 import { comparisonLayout } from "./engines/comparison";
 import { listLayout } from "./engines/list";
+import { timelineLayout } from "./engines/timeline";
 
 const REGISTRY = new Map<string, LayoutFn>([
   ["flowchart", flowchartLayout],
@@ -18,6 +19,7 @@ const REGISTRY = new Map<string, LayoutFn>([
   ["process", processLayout],
   ["comparison", comparisonLayout],
   ["list", listLayout],
+  ["timeline", timelineLayout],
 ]);
 
 /** 빈 레이아웃(미등록 타입의 폴백 — 과거 switch의 "default 없음=빈 배열" 동작 보존) */

@@ -76,12 +76,12 @@ export function irToExcalidraw(ir: DiagramIR): ExElement[] {
 
 function createRectElement(pos: NodePosition, uid: () => string): ExElement {
   return {
-    type: "rectangle",
+    type: pos.shape ?? "rectangle",
     id: uid(),
     x: pos.x,
     y: pos.y,
-    width: NODE_W,
-    height: NODE_H,
+    width: pos.w ?? NODE_W,
+    height: pos.h ?? NODE_H,
     backgroundColor: pos.color,
     strokeColor: "#1F2937",
     strokeWidth: STROKE_WIDTH,
@@ -96,17 +96,19 @@ function createTextElement(
   uid: () => string,
 ): ExElement {
   // 컨테이너 바운드 텍스트: Excalidraw가 containerId 도형 안에 가운데 정렬로 배치
+  const w = pos.w ?? NODE_W;
+  const h = pos.h ?? NODE_H;
   return {
     type: "text",
     id: uid(),
     x: pos.x + 10,
-    y: pos.y + NODE_H / 2 - FONT_SIZE / 2,
-    width: NODE_W - 20,
+    y: pos.y + h / 2 - FONT_SIZE / 2,
+    width: w - 20,
     height: FONT_SIZE + 4,
     text: pos.label,
     fontSize: FONT_SIZE,
     fontFamily: FONT_FAMILY,
-    strokeColor: "#1F2937",
+    strokeColor: pos.textColor ?? "#1F2937",
     roughness: 0,
     containerId,
     textAlign: "center",
@@ -127,9 +129,9 @@ function createArrowElement(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _label?: string,
 ): ExElement {
-  const fromX = from.x + NODE_W / 2;
-  const fromY = from.y + NODE_H;
-  const toX = to.x + NODE_W / 2;
+  const fromX = from.x + (from.w ?? NODE_W) / 2;
+  const fromY = from.y + (from.h ?? NODE_H);
+  const toX = to.x + (to.w ?? NODE_W) / 2;
   const toY = to.y;
 
   return {

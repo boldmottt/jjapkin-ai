@@ -14,6 +14,7 @@ import {
   ArrowLeftRight,
   List,
   Network,
+  Clock,
 } from "lucide-react";
 import type { DiagramType } from "@/types";
 import { DIAGRAM_TYPE_LABELS, DIAGRAM_TYPES } from "@/types";
@@ -24,6 +25,7 @@ const TYPE_ICONS: Record<DiagramType, typeof GitFork> = {
   process: GitGraph,
   comparison: ArrowLeftRight,
   list: List,
+  timeline: Clock,
 };
 
 interface TypeSelectorProps {

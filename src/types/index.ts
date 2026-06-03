@@ -8,6 +8,7 @@ export const DIAGRAM_TYPES = [
   "process",
   "comparison",
   "list",
+  "timeline",
 ] as const;
 
 export type DiagramType = (typeof DIAGRAM_TYPES)[number];
@@ -18,6 +19,7 @@ export const DIAGRAM_TYPE_LABELS: Record<DiagramType, string> = {
   process: "프로세스",
   comparison: "비교표",
   list: "리스트",
+  timeline: "타임라인",
 };
 
 // ── AI 파이프라인 ───────────────────────────────────
