@@ -31,58 +31,66 @@ export function TextEditor() {
   const tooLong = rawText.length > MAX_CHARS;
   const canGenerate = trimmedLen >= MIN_CHARS && !tooLong && !isLoading;
 
-  const handleGenerate = useCallback(async () => {
-    if (isLoading) return; // 중복 제출 방지
-    const text = rawText.trim();
-    if (text.length < MIN_CHARS) {
-      toast.error(`최소 ${MIN_CHARS}자 이상 입력해주세요.`);
-      return;
-    }
-    if (rawText.length > MAX_CHARS) {
-      toast.error(`최대 ${MAX_CHARS.toLocaleString()}자까지 지원됩니다.`);
-      return;
-    }
+  // 임의 텍스트(전체 또는 한 문단)로 생성하는 코어
+  const generateFrom = useCallback(
+    async (source: string) => {
+      if (isLoading) return; // 중복 제출 방지
+      const text = source.trim();
+      if (text.length < MIN_CHARS) {
+        toast.error(`최소 ${MIN_CHARS}자 이상 입력해주세요.`);
+        return;
+      }
+      if (text.length > MAX_CHARS) {
+        toast.error(`최대 ${MAX_CHARS.toLocaleString()}자까지 지원됩니다.`);
+        return;
+      }
 
-    setError(null);
-    setStatus("loading");
+      setError(null);
+      setStatus("loading");
 
-    try {
-      const res = await fetch("/api/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        // 사용자가 유형을 직접 골랐다면 전달, "AI 추천"(null)이면 생략
-        body: JSON.stringify({
-          text: rawText,
-          ...(activeDiagramType ? { diagramType: activeDiagramType } : {}),
-        }),
-      });
-      const json = await res.json();
-      if (!json.success) throw new Error(json.error?.message ?? "생성 실패");
+      try {
+        const res = await fetch("/api/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          // 사용자가 유형을 직접 골랐다면 전달, "AI 추천"(null)이면 생략
+          body: JSON.stringify({
+            text,
+            ...(activeDiagramType ? { diagramType: activeDiagramType } : {}),
+          }),
+        });
+        const json = await res.json();
+        if (!json.success) throw new Error(json.error?.message ?? "생성 실패");
 
-      const candidates = json.data.candidates as GenerationCandidate[];
-      setCandidates(candidates);
-      setActiveDiagramType(json.data.recommendedType);
-      setShowCandidatePanel(true);
-      // 추천(첫) 후보를 생성 히스토리에 기록
-      if (candidates[0]) addHistoryEntry(candidates[0], rawText);
-      toast.success(`${candidates.length}개의 다이어그램을 생성했어요.`);
-    } catch (err) {
-      // setError가 status를 "error"로 전환함
-      const msg = err instanceof Error ? err.message : "알 수 없는 오류";
-      setError(msg);
-      toast.error(msg);
-    }
-  }, [
-    isLoading,
-    rawText,
-    activeDiagramType,
-    setCandidates,
-    setError,
-    setStatus,
-    setActiveDiagramType,
-    setShowCandidatePanel,
-    addHistoryEntry,
-  ]);
+        const candidates = json.data.candidates as GenerationCandidate[];
+        setCandidates(candidates);
+        setActiveDiagramType(json.data.recommendedType);
+        setShowCandidatePanel(true);
+        // 추천(첫) 후보를 생성 히스토리에 기록
+        if (candidates[0]) addHistoryEntry(candidates[0], text);
+        toast.success(`${candidates.length}개의 다이어그램을 생성했어요.`);
+      } catch (err) {
+        // setError가 status를 "error"로 전환함
+        const msg = err instanceof Error ? err.message : "알 수 없는 오류";
+        setError(msg);
+        toast.error(msg);
+      }
+    },
+    [
+      isLoading,
+      activeDiagramType,
+      setCandidates,
+      setError,
+      setStatus,
+      setActiveDiagramType,
+      setShowCandidatePanel,
+      addHistoryEntry,
+    ],
+  );
+
+  const handleGenerate = useCallback(
+    () => generateFrom(rawText),
+    [generateFrom, rawText],
+  );
 
   // ⌨️ Ctrl/Cmd+Enter → 생성
   useEffect(() => {
@@ -124,6 +132,17 @@ export function TextEditor() {
       if (snip) setRawText(snip.text);
     },
     [snippets, setRawText],
+  );
+
+  // ── 문단별 생성 (인라인 문서 흐름) ──
+  const [showParagraphs, setShowParagraphs] = useState(false);
+  const paragraphs = useMemo(
+    () =>
+      rawText
+        .split(/\n\s*\n/)
+        .map((p) => p.trim())
+        .filter((p) => p.length >= MIN_CHARS),
+    [rawText],
   );
 
   // 커맨드 팔레트(⌘K) 등록: 생성 / 스니펫 저장
@@ -189,7 +208,43 @@ export function TextEditor() {
             ))}
           </select>
         )}
+        {paragraphs.length > 1 && (
+          <button
+            onClick={() => setShowParagraphs((v) => !v)}
+            className={
+              "ml-auto rounded border px-2 py-1 text-[11px] transition-colors hover:border-primary/50 " +
+              (showParagraphs ? "border-primary text-primary" : "text-muted-foreground")
+            }
+            aria-pressed={showParagraphs}
+          >
+            ⚡ 문단별 {paragraphs.length}
+          </button>
+        )}
       </div>
+
+      {/* 문단별 생성 목록 */}
+      {showParagraphs && paragraphs.length > 1 && (
+        <div className="mb-2 max-h-40 space-y-1 overflow-y-auto rounded-md border bg-muted/20 p-2">
+          {paragraphs.map((p, i) => (
+            <div
+              key={i}
+              className="flex items-center gap-2 rounded px-1 py-0.5 text-xs"
+            >
+              <span className="line-clamp-1 flex-1 text-muted-foreground">
+                {p.slice(0, 60)}
+              </span>
+              <button
+                onClick={() => generateFrom(p)}
+                disabled={isLoading}
+                title="이 문단으로 생성"
+                className="shrink-0 rounded border px-1.5 py-0.5 text-[11px] transition-colors hover:border-primary/50 disabled:opacity-40"
+              >
+                ⚡
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Mermaid 미리보기 */}
       <MermaidPreview visible={rawText.trim().length > 0} />
