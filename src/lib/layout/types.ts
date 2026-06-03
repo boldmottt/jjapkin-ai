@@ -19,8 +19,10 @@ export interface NodePosition {
   /** 노드별 크기 오버라이드(미지정 시 기본 NODE_W/NODE_H) */
   w?: number;
   h?: number;
-  /** 텍스트 색 오버라이드(미지정 시 어댑터 기본 #1F2937) */
+  /** 텍스트 색 오버라이드(미지정 시 어댑터가 배경 대비로 자동) */
   textColor?: string;
+  /** 불투명도 0~100(미지정 시 100). 벤다이어그램 겹침 표현 등 */
+  opacity?: number;
 }
 
 export type LayoutFn = (

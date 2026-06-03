@@ -41,6 +41,7 @@ export const vennLayout: LayoutFn = (nodes) => {
       w: D,
       h: D,
       shape: "ellipse",
+      opacity: 65, // 겹침 영역이 비치도록 반투명
     });
   });
 

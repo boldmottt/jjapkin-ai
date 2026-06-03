@@ -3,19 +3,41 @@
 exports[`레이아웃 골든 스냅샷 > bar-chart 출력 고정 1`] = `
 [
   {
+    "boundElements": null,
+    "height": 0,
+    "id": "elem_1",
+    "points": [
+      [
+        0,
+        0,
+      ],
+      [
+        420,
+        0,
+      ],
+    ],
+    "roughness": 0,
+    "strokeColor": "#94A3B8",
+    "strokeWidth": 2,
+    "type": "line",
+    "width": 420,
+    "x": 84,
+    "y": 420,
+  },
+  {
     "backgroundColor": "#10B981",
     "boundElements": [
       {
-        "id": "elem_2",
+        "id": "elem_3",
         "type": "text",
       },
       {
-        "id": "elem_9",
+        "id": "elem_10",
         "type": "arrow",
       },
     ],
     "height": 280,
-    "id": "elem_1",
+    "id": "elem_2",
     "roughness": 0,
     "strokeColor": "#1F2937",
     "strokeWidth": 2,
@@ -26,11 +48,11 @@ exports[`레이아웃 골든 스냅샷 > bar-chart 출력 고정 1`] = `
   },
   {
     "boundElements": null,
-    "containerId": "elem_1",
+    "containerId": "elem_2",
     "fontFamily": 2,
     "fontSize": 16,
     "height": 20,
-    "id": "elem_2",
+    "id": "elem_3",
     "roughness": 0,
     "strokeColor": "#F8FAFC",
     "text": "노드 1",
@@ -45,20 +67,20 @@ exports[`레이아웃 골든 스냅샷 > bar-chart 출력 고정 1`] = `
     "backgroundColor": "#3B82F6",
     "boundElements": [
       {
-        "id": "elem_4",
+        "id": "elem_5",
         "type": "text",
-      },
-      {
-        "id": "elem_9",
-        "type": "arrow",
       },
       {
         "id": "elem_10",
         "type": "arrow",
       },
+      {
+        "id": "elem_11",
+        "type": "arrow",
+      },
     ],
     "height": 210,
-    "id": "elem_3",
+    "id": "elem_4",
     "roughness": 0,
     "strokeColor": "#1F2937",
     "strokeWidth": 2,
@@ -69,11 +91,11 @@ exports[`레이아웃 골든 스냅샷 > bar-chart 출력 고정 1`] = `
   },
   {
     "boundElements": null,
-    "containerId": "elem_3",
+    "containerId": "elem_4",
     "fontFamily": 2,
     "fontSize": 16,
     "height": 20,
-    "id": "elem_4",
+    "id": "elem_5",
     "roughness": 0,
     "strokeColor": "#F8FAFC",
     "text": "노드 2",
@@ -88,20 +110,20 @@ exports[`레이아웃 골든 스냅샷 > bar-chart 출력 고정 1`] = `
     "backgroundColor": "#F59E0B",
     "boundElements": [
       {
-        "id": "elem_6",
+        "id": "elem_7",
         "type": "text",
       },
       {
-        "id": "elem_10",
+        "id": "elem_11",
         "type": "arrow",
       },
       {
-        "id": "elem_12",
+        "id": "elem_13",
         "type": "arrow",
       },
     ],
     "height": 140,
-    "id": "elem_5",
+    "id": "elem_6",
     "roughness": 0,
     "strokeColor": "#1F2937",
     "strokeWidth": 2,
@@ -112,11 +134,11 @@ exports[`레이아웃 골든 스냅샷 > bar-chart 출력 고정 1`] = `
   },
   {
     "boundElements": null,
-    "containerId": "elem_5",
+    "containerId": "elem_6",
     "fontFamily": 2,
     "fontSize": 16,
     "height": 20,
-    "id": "elem_6",
+    "id": "elem_7",
     "roughness": 0,
     "strokeColor": "#F8FAFC",
     "text": "노드 3",
@@ -131,16 +153,16 @@ exports[`레이아웃 골든 스냅샷 > bar-chart 출력 고정 1`] = `
     "backgroundColor": "#EF4444",
     "boundElements": [
       {
-        "id": "elem_8",
+        "id": "elem_9",
         "type": "text",
       },
       {
-        "id": "elem_12",
+        "id": "elem_13",
         "type": "arrow",
       },
     ],
     "height": 70,
-    "id": "elem_7",
+    "id": "elem_8",
     "roughness": 0,
     "strokeColor": "#1F2937",
     "strokeWidth": 2,
@@ -151,11 +173,11 @@ exports[`레이아웃 골든 스냅샷 > bar-chart 출력 고정 1`] = `
   },
   {
     "boundElements": null,
-    "containerId": "elem_7",
+    "containerId": "elem_8",
     "fontFamily": 2,
     "fontSize": 16,
     "height": 20,
-    "id": "elem_8",
+    "id": "elem_9",
     "roughness": 0,
     "strokeColor": "#F8FAFC",
     "text": "노드 4",
@@ -169,12 +191,12 @@ exports[`레이아웃 골든 스냅샷 > bar-chart 출력 고정 1`] = `
   {
     "boundElements": null,
     "endBinding": {
-      "elementId": "elem_3",
+      "elementId": "elem_4",
       "focus": 0,
       "gap": 4,
     },
     "height": 210,
-    "id": "elem_9",
+    "id": "elem_10",
     "points": [
       [
         0,
@@ -187,7 +209,7 @@ exports[`레이아웃 골든 스냅샷 > bar-chart 출력 고정 1`] = `
     ],
     "roughness": 0,
     "startBinding": {
-      "elementId": "elem_1",
+      "elementId": "elem_2",
       "focus": 0,
       "gap": 4,
     },
@@ -201,12 +223,12 @@ exports[`레이아웃 골든 스냅샷 > bar-chart 출력 고정 1`] = `
   {
     "boundElements": null,
     "endBinding": {
-      "elementId": "elem_5",
+      "elementId": "elem_6",
       "focus": 0,
       "gap": 4,
     },
     "height": 140,
-    "id": "elem_10",
+    "id": "elem_11",
     "points": [
       [
         0,
@@ -219,7 +241,7 @@ exports[`레이아웃 골든 스냅샷 > bar-chart 출력 고정 1`] = `
     ],
     "roughness": 0,
     "startBinding": {
-      "elementId": "elem_3",
+      "elementId": "elem_4",
       "focus": 0,
       "gap": 4,
     },
@@ -237,7 +259,7 @@ exports[`레이아웃 골든 스냅샷 > bar-chart 출력 고정 1`] = `
     "fontFamily": 2,
     "fontSize": 12,
     "height": 16,
-    "id": "elem_11",
+    "id": "elem_12",
     "roughness": 0,
     "strokeColor": "#6B7280",
     "text": "예",
@@ -251,12 +273,12 @@ exports[`레이아웃 골든 스냅샷 > bar-chart 출력 고정 1`] = `
   {
     "boundElements": null,
     "endBinding": {
-      "elementId": "elem_7",
+      "elementId": "elem_8",
       "focus": 0,
       "gap": 4,
     },
     "height": 70,
-    "id": "elem_12",
+    "id": "elem_13",
     "points": [
       [
         0,
@@ -269,7 +291,7 @@ exports[`레이아웃 골든 스냅샷 > bar-chart 출력 고정 1`] = `
     ],
     "roughness": 0,
     "startBinding": {
-      "elementId": "elem_5",
+      "elementId": "elem_6",
       "focus": 0,
       "gap": 4,
     },
@@ -3116,19 +3138,41 @@ exports[`레이아웃 골든 스냅샷 > swimlane 출력 고정 1`] = `
 exports[`레이아웃 골든 스냅샷 > timeline 출력 고정 1`] = `
 [
   {
+    "boundElements": null,
+    "height": 0,
+    "id": "elem_1",
+    "points": [
+      [
+        0,
+        0,
+      ],
+      [
+        720,
+        0,
+      ],
+    ],
+    "roughness": 0,
+    "strokeColor": "#94A3B8",
+    "strokeWidth": 3,
+    "type": "line",
+    "width": 720,
+    "x": 180,
+    "y": 280,
+  },
+  {
     "backgroundColor": "#10B981",
     "boundElements": [
       {
-        "id": "elem_2",
+        "id": "elem_3",
         "type": "text",
       },
       {
-        "id": "elem_9",
+        "id": "elem_10",
         "type": "arrow",
       },
     ],
     "height": 60,
-    "id": "elem_1",
+    "id": "elem_2",
     "roughness": 0,
     "strokeColor": "#1F2937",
     "strokeWidth": 2,
@@ -3139,11 +3183,11 @@ exports[`레이아웃 골든 스냅샷 > timeline 출력 고정 1`] = `
   },
   {
     "boundElements": null,
-    "containerId": "elem_1",
+    "containerId": "elem_2",
     "fontFamily": 2,
     "fontSize": 16,
     "height": 20,
-    "id": "elem_2",
+    "id": "elem_3",
     "roughness": 0,
     "strokeColor": "#F8FAFC",
     "text": "노드 1",
@@ -3158,20 +3202,20 @@ exports[`레이아웃 골든 스냅샷 > timeline 출력 고정 1`] = `
     "backgroundColor": "#3B82F6",
     "boundElements": [
       {
-        "id": "elem_4",
+        "id": "elem_5",
         "type": "text",
-      },
-      {
-        "id": "elem_9",
-        "type": "arrow",
       },
       {
         "id": "elem_10",
         "type": "arrow",
       },
+      {
+        "id": "elem_11",
+        "type": "arrow",
+      },
     ],
     "height": 60,
-    "id": "elem_3",
+    "id": "elem_4",
     "roughness": 0,
     "strokeColor": "#1F2937",
     "strokeWidth": 2,
@@ -3182,11 +3226,11 @@ exports[`레이아웃 골든 스냅샷 > timeline 출력 고정 1`] = `
   },
   {
     "boundElements": null,
-    "containerId": "elem_3",
+    "containerId": "elem_4",
     "fontFamily": 2,
     "fontSize": 16,
     "height": 20,
-    "id": "elem_4",
+    "id": "elem_5",
     "roughness": 0,
     "strokeColor": "#F8FAFC",
     "text": "노드 2",
@@ -3201,20 +3245,20 @@ exports[`레이아웃 골든 스냅샷 > timeline 출력 고정 1`] = `
     "backgroundColor": "#F59E0B",
     "boundElements": [
       {
-        "id": "elem_6",
+        "id": "elem_7",
         "type": "text",
       },
       {
-        "id": "elem_10",
+        "id": "elem_11",
         "type": "arrow",
       },
       {
-        "id": "elem_12",
+        "id": "elem_13",
         "type": "arrow",
       },
     ],
     "height": 60,
-    "id": "elem_5",
+    "id": "elem_6",
     "roughness": 0,
     "strokeColor": "#1F2937",
     "strokeWidth": 2,
@@ -3225,11 +3269,11 @@ exports[`레이아웃 골든 스냅샷 > timeline 출력 고정 1`] = `
   },
   {
     "boundElements": null,
-    "containerId": "elem_5",
+    "containerId": "elem_6",
     "fontFamily": 2,
     "fontSize": 16,
     "height": 20,
-    "id": "elem_6",
+    "id": "elem_7",
     "roughness": 0,
     "strokeColor": "#F8FAFC",
     "text": "노드 3",
@@ -3244,16 +3288,16 @@ exports[`레이아웃 골든 스냅샷 > timeline 출력 고정 1`] = `
     "backgroundColor": "#EF4444",
     "boundElements": [
       {
-        "id": "elem_8",
+        "id": "elem_9",
         "type": "text",
       },
       {
-        "id": "elem_12",
+        "id": "elem_13",
         "type": "arrow",
       },
     ],
     "height": 60,
-    "id": "elem_7",
+    "id": "elem_8",
     "roughness": 0,
     "strokeColor": "#1F2937",
     "strokeWidth": 2,
@@ -3264,11 +3308,11 @@ exports[`레이아웃 골든 스냅샷 > timeline 출력 고정 1`] = `
   },
   {
     "boundElements": null,
-    "containerId": "elem_7",
+    "containerId": "elem_8",
     "fontFamily": 2,
     "fontSize": 16,
     "height": 20,
-    "id": "elem_8",
+    "id": "elem_9",
     "roughness": 0,
     "strokeColor": "#F8FAFC",
     "text": "노드 4",
@@ -3282,12 +3326,12 @@ exports[`레이아웃 골든 스냅샷 > timeline 출력 고정 1`] = `
   {
     "boundElements": null,
     "endBinding": {
-      "elementId": "elem_3",
+      "elementId": "elem_4",
       "focus": 0,
       "gap": 4,
     },
     "height": 140,
-    "id": "elem_9",
+    "id": "elem_10",
     "points": [
       [
         0,
@@ -3300,7 +3344,7 @@ exports[`레이아웃 골든 스냅샷 > timeline 출력 고정 1`] = `
     ],
     "roughness": 0,
     "startBinding": {
-      "elementId": "elem_1",
+      "elementId": "elem_2",
       "focus": 0,
       "gap": 4,
     },
@@ -3314,12 +3358,12 @@ exports[`레이아웃 골든 스냅샷 > timeline 출력 고정 1`] = `
   {
     "boundElements": null,
     "endBinding": {
-      "elementId": "elem_5",
+      "elementId": "elem_6",
       "focus": 0,
       "gap": 4,
     },
     "height": 260,
-    "id": "elem_10",
+    "id": "elem_11",
     "points": [
       [
         0,
@@ -3332,7 +3376,7 @@ exports[`레이아웃 골든 스냅샷 > timeline 출력 고정 1`] = `
     ],
     "roughness": 0,
     "startBinding": {
-      "elementId": "elem_3",
+      "elementId": "elem_4",
       "focus": 0,
       "gap": 4,
     },
@@ -3350,7 +3394,7 @@ exports[`레이아웃 골든 스냅샷 > timeline 출력 고정 1`] = `
     "fontFamily": 2,
     "fontSize": 12,
     "height": 16,
-    "id": "elem_11",
+    "id": "elem_12",
     "roughness": 0,
     "strokeColor": "#6B7280",
     "text": "예",
@@ -3364,12 +3408,12 @@ exports[`레이아웃 골든 스냅샷 > timeline 출력 고정 1`] = `
   {
     "boundElements": null,
     "endBinding": {
-      "elementId": "elem_7",
+      "elementId": "elem_8",
       "focus": 0,
       "gap": 4,
     },
     "height": 140,
-    "id": "elem_12",
+    "id": "elem_13",
     "points": [
       [
         0,
@@ -3382,7 +3426,7 @@ exports[`레이아웃 골든 스냅샷 > timeline 출력 고정 1`] = `
     ],
     "roughness": 0,
     "startBinding": {
-      "elementId": "elem_5",
+      "elementId": "elem_6",
       "focus": 0,
       "gap": 4,
     },
@@ -3412,6 +3456,7 @@ exports[`레이아웃 골든 스냅샷 > venn 출력 고정 1`] = `
     ],
     "height": 220,
     "id": "elem_1",
+    "opacity": 65,
     "roughness": 0,
     "strokeColor": "#1F2937",
     "strokeWidth": 2,
@@ -3455,6 +3500,7 @@ exports[`레이아웃 골든 스냅샷 > venn 출력 고정 1`] = `
     ],
     "height": 220,
     "id": "elem_3",
+    "opacity": 65,
     "roughness": 0,
     "strokeColor": "#1F2937",
     "strokeWidth": 2,
@@ -3498,6 +3544,7 @@ exports[`레이아웃 골든 스냅샷 > venn 출력 고정 1`] = `
     ],
     "height": 220,
     "id": "elem_5",
+    "opacity": 65,
     "roughness": 0,
     "strokeColor": "#1F2937",
     "strokeWidth": 2,

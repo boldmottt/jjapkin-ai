@@ -9,6 +9,7 @@
 import type { DiagramIR } from "@/types";
 import type { SceneElement } from "@/lib/scene/types";
 import { getLayout } from "@/lib/layout/registry";
+import { getDecorations } from "@/lib/layout/decorations";
 import type { NodePosition } from "@/lib/layout/types";
 import { NODE_W, NODE_H } from "@/lib/layout/constants";
 import { iconToDataUrl } from "@/lib/icons/render";
@@ -35,6 +36,11 @@ export function irToExcalidraw(ir: DiagramIR): ExElement[] {
   // 각 노드 → rectangle + (컨테이너 바운드) text
   // 레이아웃은 타입별 엔진(lib/layout)이 담당 → 어댑터는 요소 생성만.
   const nodePositions = getLayout(ir.diagramType)(ir.nodes, ir.edges);
+
+  // 타입별 장식(타임라인 중심선·막대 기준선/값 라벨 등)
+  const decorations = getDecorations(ir.diagramType, ir, nodePositions, uid);
+  // 노드 뒤(배경)에 깔리는 장식 먼저
+  elements.push(...(decorations.behind as ExElement[]));
 
   // node id → rectangle element id (화살표 바인딩에 사용)
   const rectIdByNode = new Map<string, ExElement>();
@@ -81,6 +87,9 @@ export function irToExcalidraw(ir: DiagramIR): ExElement[] {
       elements.push(createEdgeLabel(fromPos, toPos, edge.label, uid));
     }
   }
+
+  // 노드 앞(전경) 장식(막대 값 라벨 등)
+  elements.push(...(decorations.front as ExElement[]));
 
   return elements;
 }
@@ -162,6 +171,7 @@ function createRectElement(pos: NodePosition, uid: () => string): ExElement {
     strokeColor: "#1F2937",
     strokeWidth: STROKE_WIDTH,
     roughness: 0,
+    ...(pos.opacity != null ? { opacity: pos.opacity } : {}),
     boundElements: [], // 호출부에서 text/arrow 바인딩이 추가됨
   };
 }

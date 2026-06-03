@@ -42,14 +42,17 @@ describe("전체 타입 구조 무결성", () => {
         els.filter((e) => SHAPES.has(String(e.type))).map((e) => e.id),
       );
       const texts = els.filter((e) => e.type === "text");
-      // 노드 4개 → 도형 4개 + 텍스트 4개 (엣지 화살표는 타입마다 다름)
+      // 노드에 바운드된 텍스트(=노드 텍스트)와 독립 장식 텍스트를 구분
+      const boundTexts = texts.filter(
+        (t) => typeof (t as { containerId?: unknown }).containerId === "string",
+      );
+      // 노드 4개 → 도형 4개 + 노드 텍스트 4개 (장식 텍스트는 타입마다 다름)
       expect(shapeIds.size).toBe(4);
-      expect(texts.length).toBe(4);
+      expect(boundTexts.length).toBe(4);
 
-      // 모든 텍스트가 실제 도형에 바운드
-      for (const tx of texts) {
+      // 모든 노드 텍스트가 실제 도형에 바운드
+      for (const tx of boundTexts) {
         const cid = (tx as { containerId?: string | null }).containerId;
-        expect(typeof cid).toBe("string");
         expect(shapeIds.has(cid as string)).toBe(true);
       }
 
