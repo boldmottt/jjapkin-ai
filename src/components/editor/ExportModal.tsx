@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Download, FileImage, FileText, Presentation, PenTool } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 
-export type ExportFormat = "ai-svg" | "ai-pdf" | "png" | "svg" | "pptx" | "pdf";
+export type ExportFormat = "ai-svg" | "ai-pdf" | "png" | "svg" | "pptx" | "pdf" | "pdf-vector";
 
 interface ExportModalProps {
   open: boolean;
@@ -62,10 +62,18 @@ const FORMATS: {
   },
   {
     id: "pdf",
-    label: "PDF 문서",
+    label: "PDF 문서 (이미지)",
     icon: FileText,
     ext: ".pdf",
-    desc: "공유/인쇄용 범용 문서",
+    desc: "공유/인쇄용. 화면을 이미지로 담음 (편집 불가)",
+    priority: false,
+  },
+  {
+    id: "pdf-vector",
+    label: "PDF 문서 (벡터)",
+    icon: FileText,
+    ext: ".pdf",
+    desc: "무한 확대·재편집 가능한 벡터 PDF. Illustrator에서 열기 가능",
     priority: false,
   },
 ];

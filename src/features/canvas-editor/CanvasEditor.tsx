@@ -9,6 +9,7 @@ import {
   exportToSvg,
   exportToPptx,
   exportToPdf,
+  exportToVectorPdf,
   exportToIllustratorSvg,
   exportToIllustratorPdf,
 } from "../export-pipeline";
@@ -190,6 +191,9 @@ export function CanvasEditor() {
             break;
           case "pdf":
             await exportToPdf({ api, filename: title, title });
+            break;
+          case "pdf-vector":
+            await exportToVectorPdf({ api, filename: title, title });
             break;
         }
         toast.success(`${format.toUpperCase()} 내보내기 완료`);
