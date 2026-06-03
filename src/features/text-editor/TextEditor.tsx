@@ -92,6 +92,53 @@ export function TextEditor() {
     [generateFrom, rawText],
   );
 
+  // 이미지(손그림/스샷) → 다이어그램 (비전)
+  const handleImage = useCallback(
+    async (file: File) => {
+      if (isLoading) return;
+      if (file.size > 6 * 1024 * 1024) {
+        toast.error("이미지가 너무 큽니다(최대 6MB).");
+        return;
+      }
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(r.result as string);
+        r.onerror = reject;
+        r.readAsDataURL(file);
+      });
+      setError(null);
+      setStatus("loading");
+      try {
+        const res = await fetch("/api/generate-from-image", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ image: dataUrl }),
+        });
+        const json = await res.json();
+        if (!json.success) throw new Error(json.error?.message ?? "이미지 변환 실패");
+        const candidates = json.data.candidates as GenerationCandidate[];
+        setCandidates(candidates);
+        setActiveDiagramType(json.data.recommendedType);
+        setShowCandidatePanel(true);
+        if (candidates[0]) addHistoryEntry(candidates[0], "(이미지에서 생성)");
+        toast.success(`이미지에서 ${candidates.length}개 생성했어요.`);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "이미지 변환 실패";
+        setError(msg);
+        toast.error(msg);
+      }
+    },
+    [
+      isLoading,
+      setError,
+      setStatus,
+      setCandidates,
+      setActiveDiagramType,
+      setShowCandidatePanel,
+      addHistoryEntry,
+    ],
+  );
+
   // ⌨️ Ctrl/Cmd+Enter → 생성
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -188,6 +235,20 @@ export function TextEditor() {
         >
           ＋ 스니펫 저장
         </button>
+        <label className="cursor-pointer rounded border px-2 py-1 text-[11px] text-muted-foreground transition-colors hover:border-primary/50">
+          🖼 이미지→
+          <input
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            className="hidden"
+            disabled={isLoading}
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) handleImage(f);
+              e.target.value = "";
+            }}
+          />
+        </label>
         {snippets.length > 0 && (
           <select
             aria-label="스니펫 불러오기"
