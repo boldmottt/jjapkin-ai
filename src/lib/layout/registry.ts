@@ -6,9 +6,8 @@
  */
 import type { DiagramType } from "@/types";
 import type { LayoutFn } from "./types";
-import { flowchartLayout } from "./engines/flowchart";
+import { makeAutoLayout } from "./engines/auto";
 import { mindmapLayout } from "./engines/mindmap";
-import { processLayout } from "./engines/process";
 import { comparisonLayout } from "./engines/comparison";
 import { listLayout } from "./engines/list";
 import { timelineLayout } from "./engines/timeline";
@@ -21,9 +20,11 @@ import { barChartLayout } from "./engines/bar-chart";
 import { swimlaneLayout } from "./engines/swimlane";
 
 const REGISTRY = new Map<string, LayoutFn>([
-  ["flowchart", flowchartLayout],
+  // 그래프형: dagre 자동 레이아웃(노드 크기 반영, 겹침 제거)
+  ["flowchart", makeAutoLayout({ rankdir: "TB" })],
+  ["process", makeAutoLayout({ rankdir: "LR" })],
+  // 고유 기하 레이아웃
   ["mindmap", mindmapLayout],
-  ["process", processLayout],
   ["comparison", comparisonLayout],
   ["list", listLayout],
   ["timeline", timelineLayout],
