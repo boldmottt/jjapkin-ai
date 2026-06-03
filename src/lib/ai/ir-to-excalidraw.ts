@@ -12,6 +12,7 @@ import { getLayout } from "@/lib/layout/registry";
 import type { NodePosition } from "@/lib/layout/types";
 import { NODE_W, NODE_H } from "@/lib/layout/constants";
 import { iconToDataUrl } from "@/lib/icons/render";
+import { idealTextColor } from "@/lib/scene/color";
 
 // ── Excalidraw Element 타입 (단일 SceneElement 사용) ─
 // 과거의 로컬 ExElement 인터페이스는 SceneElement로 통합됨.
@@ -113,7 +114,11 @@ export function irToExcalidrawWithFiles(ir: DiagramIR): {
   for (const pos of positions) {
     const node = nodeById.get(pos.id);
     if (!node?.icon) continue;
-    const dataURL = iconToDataUrl(node.icon, pos.textColor ?? "#1F2937", 48);
+    const dataURL = iconToDataUrl(
+      node.icon,
+      pos.textColor ?? idealTextColor(pos.color),
+      48,
+    );
     if (!dataURL) continue;
 
     const fileId = `iconfile_${pos.id}`;
@@ -179,7 +184,8 @@ function createTextElement(
     text: pos.label,
     fontSize: FONT_SIZE,
     fontFamily: FONT_FAMILY,
-    strokeColor: pos.textColor ?? "#1F2937",
+    // 노드 배경 대비에 맞춰 텍스트 색 자동 보정(가독성)
+    strokeColor: pos.textColor ?? idealTextColor(pos.color),
     roughness: 0,
     containerId,
     textAlign: "center",
