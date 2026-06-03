@@ -7,6 +7,8 @@ import {
 } from "@/lib/ai/ir-to-excalidraw";
 import { iconToDataUrl } from "@/lib/icons/render";
 import { applyTheme, THEMES } from "@/lib/themes";
+import { useRegisterCommands } from "@/hooks/useCommands";
+import type { Command } from "@/stores/commands";
 import { ExcalidrawWrapper, type ExcalidrawElement } from "./ExcalidrawWrapper";
 import { ExportModal } from "@/components/editor/ExportModal";
 import {
@@ -234,6 +236,40 @@ export function CanvasEditor() {
     );
     apiRef.current?.updateScene({ appState: { selectedElementIds } as never });
   }, []);
+
+  // 커맨드 팔레트(⌘K)에 캔버스 액션 등록
+  const paletteCommands = useMemo<Command[]>(
+    () => [
+      {
+        id: "cmd-export",
+        label: "내보내기…",
+        group: "파일",
+        keywords: "export png svg pdf",
+        run: () => setExportModalOpen(true),
+      },
+      {
+        id: "cmd-toggle-props",
+        label: "속성 패널 토글",
+        group: "보기",
+        run: () => setShowProps((v) => !v),
+      },
+      {
+        id: "cmd-toggle-layers",
+        label: "레이어 패널 토글",
+        group: "보기",
+        run: () => setShowLayers((v) => !v),
+      },
+      ...THEMES.map((t) => ({
+        id: `cmd-theme-${t.id}`,
+        label: `테마: ${t.label}`,
+        group: "테마",
+        keywords: "theme style",
+        run: () => handleApplyTheme(t.id),
+      })),
+    ],
+    [handleApplyTheme],
+  );
+  useRegisterCommands(paletteCommands);
 
   const showExcalidraw =
     selectedCandidateId && status === "success" && excalidrawElements.length > 0;

@@ -8,8 +8,10 @@ import { CanvasEditor } from "@/features/canvas-editor/CanvasEditor";
 import { CandidatePanel } from "@/features/diagram-generator/CandidatePanel";
 import { useDocumentPersistence } from "@/hooks/useDocumentPersistence";
 import { AuthButton } from "@/features/auth/AuthButton";
+import { CommandPalette } from "@/components/CommandPalette";
+import { useCommandStore } from "@/stores/commands";
 import { useTheme } from "next-themes";
-import { Moon, Sun, ArrowLeft } from "lucide-react";
+import { Moon, Sun, ArrowLeft, Command as CommandIcon } from "lucide-react";
 
 export default function EditorPage() {
   const { showCandidatePanel } = useEditorLayoutStore();
@@ -75,6 +77,15 @@ export default function EditorPage() {
         </div>
         <div className="flex items-center gap-2">
           <button
+            onClick={() => useCommandStore.getState().setPaletteOpen(true)}
+            className="hidden items-center gap-1.5 rounded border px-2 py-1 text-xs text-muted-foreground transition-colors hover:border-primary/50 sm:flex"
+            aria-label="커맨드 팔레트 (⌘K)"
+            title="커맨드 팔레트 (⌘K / Ctrl+K)"
+          >
+            <CommandIcon className="h-3.5 w-3.5" />
+            <span>K</span>
+          </button>
+          <button
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
             className="rounded p-1.5 transition-colors hover:bg-muted"
             aria-label="다크모드 전환"
@@ -116,6 +127,9 @@ export default function EditorPage() {
           {showCandidatePanel && <CandidatePanel />}
         </section>
       </main>
+
+      {/* 커맨드 팔레트 (⌘K) */}
+      <CommandPalette />
     </div>
   );
 }

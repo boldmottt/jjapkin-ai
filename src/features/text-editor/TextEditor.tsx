@@ -4,9 +4,16 @@ import { useDocumentStore, useGenerationStore, useEditorLayoutStore } from "@/st
 import { useDiagramHistoryStore } from "@/stores/diagram-history";
 import { MermaidPreview } from "@/features/diagram-generator/MermaidPreview";
 import { TypeSelector } from "@/features/diagram-generator/TypeSelector";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { DiagramType, GenerationCandidate } from "@/types";
 import { toast } from "@/stores/toast";
+import {
+  loadSnippets,
+  saveSnippet,
+  type Snippet,
+} from "@/lib/snippets";
+import { useRegisterCommands } from "@/hooks/useCommands";
+import type { Command } from "@/stores/commands";
 
 const MIN_CHARS = 10;
 const MAX_CHARS = 5000;
@@ -96,6 +103,50 @@ export function TextEditor() {
     [setActiveDiagramType],
   );
 
+  // ── 프롬프트 스니펫 (로컬 재사용) ──
+  const [snippets, setSnippets] = useState<Snippet[]>([]);
+  useEffect(() => setSnippets(loadSnippets()), []);
+
+  const handleSaveSnippet = useCallback(() => {
+    const text = rawText.trim();
+    if (text.length < MIN_CHARS) {
+      toast.error("저장할 내용이 너무 짧습니다.");
+      return;
+    }
+    const name = text.slice(0, 24).replace(/\s+/g, " ");
+    setSnippets(saveSnippet(name, rawText));
+    toast.success("스니펫 저장됨");
+  }, [rawText]);
+
+  const handleInsertSnippet = useCallback(
+    (id: string) => {
+      const snip = snippets.find((s) => s.id === id);
+      if (snip) setRawText(snip.text);
+    },
+    [snippets, setRawText],
+  );
+
+  // 커맨드 팔레트(⌘K) 등록: 생성 / 스니펫 저장
+  const paletteCommands = useMemo<Command[]>(
+    () => [
+      {
+        id: "cmd-generate",
+        label: "다이어그램 생성",
+        group: "생성",
+        keywords: "generate run",
+        run: () => handleGenerate(),
+      },
+      {
+        id: "cmd-save-snippet",
+        label: "현재 입력을 스니펫으로 저장",
+        group: "스니펫",
+        run: () => handleSaveSnippet(),
+      },
+    ],
+    [handleGenerate, handleSaveSnippet],
+  );
+  useRegisterCommands(paletteCommands);
+
   return (
     <div className="flex h-full flex-col p-4">
       {/* 제목 */}
@@ -109,6 +160,36 @@ export function TextEditor() {
 
       {/* 다이어그램 유형 선택기 */}
       <TypeSelector selected={activeDiagramType} onSelect={handleTypeSelect} />
+
+      {/* 프롬프트 스니펫 바 */}
+      <div className="flex items-center gap-2 px-2 pb-1 text-xs">
+        <button
+          onClick={handleSaveSnippet}
+          className="rounded border px-2 py-1 text-[11px] text-muted-foreground transition-colors hover:border-primary/50"
+        >
+          ＋ 스니펫 저장
+        </button>
+        {snippets.length > 0 && (
+          <select
+            aria-label="스니펫 불러오기"
+            defaultValue=""
+            onChange={(e) => {
+              if (e.target.value) handleInsertSnippet(e.target.value);
+              e.target.value = "";
+            }}
+            className="min-w-0 flex-1 rounded border bg-transparent px-2 py-1 text-[11px] outline-none"
+          >
+            <option value="" disabled>
+              스니펫 불러오기…
+            </option>
+            {snippets.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.title}
+              </option>
+            ))}
+          </select>
+        )}
+      </div>
 
       {/* Mermaid 미리보기 */}
       <MermaidPreview visible={rawText.trim().length > 0} />
