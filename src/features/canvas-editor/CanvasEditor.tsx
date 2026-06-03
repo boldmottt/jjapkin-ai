@@ -37,7 +37,6 @@ import {
   distributeElements,
   createShadows,
   getSelected,
-  type PropEl,
   type AlignMode,
 } from "@/lib/element-props";
 
@@ -101,43 +100,32 @@ export function CanvasEditor() {
   const layerItems = useMemo(() => buildLayers(sceneElements), [sceneElements]);
 
   const selectedElements = useMemo(
-    () => getSelected(sceneElements as unknown as PropEl[], selectedIds),
+    () => getSelected(sceneElements, selectedIds),
     [sceneElements, selectedIds],
   );
 
   const handlePatch = useCallback(
     (patch: Record<string, unknown>) =>
-      applyElements(
-        applyProps(sceneElements as unknown as PropEl[], selectedIds, patch) as unknown as ExcalidrawElement[],
-      ),
+      applyElements(applyProps(sceneElements, selectedIds, patch)),
     [applyElements, sceneElements, selectedIds],
   );
   const handleFlip = useCallback(
     (axis: "horizontal" | "vertical") =>
-      applyElements(
-        flipElements(sceneElements as unknown as PropEl[], selectedIds, axis) as unknown as ExcalidrawElement[],
-      ),
+      applyElements(flipElements(sceneElements, selectedIds, axis)),
     [applyElements, sceneElements, selectedIds],
   );
   const handleAlign = useCallback(
     (mode: AlignMode) =>
-      applyElements(
-        alignElements(sceneElements as unknown as PropEl[], selectedIds, mode) as unknown as ExcalidrawElement[],
-      ),
+      applyElements(alignElements(sceneElements, selectedIds, mode)),
     [applyElements, sceneElements, selectedIds],
   );
   const handleDistribute = useCallback(
     (axis: "horizontal" | "vertical") =>
-      applyElements(
-        distributeElements(sceneElements as unknown as PropEl[], selectedIds, axis) as unknown as ExcalidrawElement[],
-      ),
+      applyElements(distributeElements(sceneElements, selectedIds, axis)),
     [applyElements, sceneElements, selectedIds],
   );
   const handleAddShadow = useCallback(
-    () =>
-      applyElements(
-        createShadows(sceneElements as unknown as PropEl[], selectedIds) as unknown as ExcalidrawElement[],
-      ),
+    () => applyElements(createShadows(sceneElements, selectedIds)),
     [applyElements, sceneElements, selectedIds],
   );
 

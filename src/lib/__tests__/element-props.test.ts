@@ -13,8 +13,8 @@ import {
 } from "@/lib/element-props";
 
 const els: PropEl[] = [
-  { id: "a", x: 0, y: 0, width: 100, height: 50 },
-  { id: "b", x: 200, y: 100, width: 50, height: 50 },
+  { id: "a", type: "rectangle", x: 0, y: 0, width: 100, height: 50 },
+  { id: "b", type: "rectangle", x: 200, y: 100, width: 50, height: 50 },
 ];
 const idsAB = new Set(["a", "b"]);
 
@@ -60,7 +60,7 @@ describe("flipElements", () => {
 
   it("각도를 반전하고 points를 미러", () => {
     const lin: PropEl[] = [
-      { id: "l", x: 0, y: 0, width: 100, height: 0, angle: 0.5, points: [[0, 0], [100, 0]] },
+      { id: "l", type: "line", x: 0, y: 0, width: 100, height: 0, angle: 0.5, points: [[0, 0], [100, 0]] },
     ];
     const next = flipElements(lin, new Set(["l"]), "horizontal");
     expect(next[0].angle).toBe(-0.5);
@@ -76,9 +76,9 @@ describe("flipElements", () => {
 describe("distributeElements", () => {
   it("3개를 균등 간격으로 분배 (첫·끝 고정)", () => {
     const three: PropEl[] = [
-      { id: "a", x: 0, y: 0, width: 10, height: 10 },
-      { id: "b", x: 30, y: 0, width: 10, height: 10 },
-      { id: "c", x: 100, y: 0, width: 10, height: 10 },
+      { id: "a", type: "rectangle", x: 0, y: 0, width: 10, height: 10 },
+      { id: "b", type: "rectangle", x: 30, y: 0, width: 10, height: 10 },
+      { id: "c", type: "rectangle", x: 100, y: 0, width: 10, height: 10 },
     ];
     const ids = new Set(["a", "b", "c"]);
     const next = distributeElements(three, ids, "horizontal");

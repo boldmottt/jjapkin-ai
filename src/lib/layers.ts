@@ -10,17 +10,10 @@
  * 표시/숨김은 opacity(0↔100), 잠금은 locked, 순서는 요소 배열의 z-order로 매핑.
  */
 
-/** 레이어 로직에 필요한 최소 요소 형태 */
-export interface SceneEl {
-  id: string;
-  type: string;
-  groupIds?: unknown;
-  locked?: unknown;
-  opacity?: unknown;
-  containerId?: unknown;
-  text?: unknown;
-  isDeleted?: unknown;
-}
+import type { SceneElement } from "@/lib/scene/types";
+
+/** 레이어 로직이 다루는 요소 = 정규 SceneElement (별칭, 하위호환) */
+export type SceneEl = SceneElement;
 
 export interface LayerItem {
   /** 안정적 식별자 (groupId 또는 element id) */

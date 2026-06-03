@@ -96,7 +96,7 @@ describe("irToExcalidraw", () => {
     // left-to-right 이므로 x 좌표가 점점 커져야 함
     const rects = elements.filter((e) => e.type === "rectangle");
     for (let i = 1; i < rects.length; i++) {
-      expect(rects[i].x).toBeGreaterThan(rects[i - 1].x);
+      expect(rects[i].x!).toBeGreaterThan(rects[i - 1].x!);
     }
   });
 
@@ -116,8 +116,8 @@ describe("irToExcalidraw", () => {
     const rects = elements.filter((e) => e.type === "rectangle");
     // comparison은 좌측컬럼 먼저 → 우측컬럼 순서로 배치
     // 2개 이상 x < 200 (좌측), 2개 이상 x > 300 (우측)
-    const leftCount = rects.filter((r) => r.x < 200).length;
-    const rightCount = rects.filter((r) => r.x > 300).length;
+    const leftCount = rects.filter((r) => r.x! < 200).length;
+    const rightCount = rects.filter((r) => r.x! > 300).length;
     expect(leftCount).toBe(2);
     expect(rightCount).toBe(2);
   });
@@ -138,7 +138,7 @@ describe("irToExcalidraw", () => {
     const elements = irToExcalidraw(listIR);
     const rects = elements.filter((e) => e.type === "rectangle");
     for (let i = 1; i < rects.length; i++) {
-      expect(rects[i].y).toBeGreaterThan(rects[i - 1].y);
+      expect(rects[i].y!).toBeGreaterThan(rects[i - 1].y!);
     }
   });
 

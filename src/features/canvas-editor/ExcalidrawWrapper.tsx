@@ -16,6 +16,7 @@
 import dynamic from "next/dynamic";
 import { useCallback } from "react";
 import type { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types";
+import type { SceneElement } from "@/lib/scene/types";
 
 // Excalidraw는 CSR 전용 (window 객체 의존)
 const ExcalidrawLazy = dynamic(
@@ -24,16 +25,8 @@ const ExcalidrawLazy = dynamic(
   { ssr: false },
 );
 
-// Excalidraw Element 최소 인터페이스
-// 실제 타입과 충돌하지 않도록 index signature 포함
-export type ExcalidrawElement = Record<string, unknown> & {
-  id: string;
-  type: string;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-};
+// Excalidraw Element 타입 = 정규 SceneElement (별칭, 하위호환)
+export type ExcalidrawElement = SceneElement;
 
 /** onChange가 함께 전달하는 최소 앱 상태 (선택 등) */
 export interface SceneChangeMeta {

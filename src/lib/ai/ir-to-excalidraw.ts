@@ -6,37 +6,12 @@
  */
 
 import type { DiagramIR, DiagramType } from "@/types";
+import type { SceneElement } from "@/lib/scene/types";
 import { DEFAULT_NODE_COLORS } from "./parser";
 
-// ── Excalidraw Element 타입 (경량화) ───────────────
-
-interface ExElement {
-  type: string;          // "rectangle" | "text" | "arrow"
-  id: string;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  // 텍스트 요소
-  text?: string;
-  fontSize?: number;
-  fontFamily?: number;   // Excalidraw 폰트 ID (1=hand-drawn, 2=normal, 3=code)
-  containerId?: string | null; // 컨테이너 바운드 텍스트가 속한 도형 id
-  textAlign?: "left" | "center" | "right";
-  verticalAlign?: "top" | "middle" | "bottom";
-  // 도형 공통
-  backgroundColor?: string;
-  strokeColor?: string;
-  strokeWidth?: number;
-  roughness?: number;     // 0=직선, 1=손그림, 2=중간
-  // 화살표
-  startBinding?: { elementId: string; focus: number; gap: number };
-  endBinding?: { elementId: string; focus: number; gap: number };
-  points?: [number, number][];
-  // 그룹
-  groupIds?: string[];
-  boundElements?: { id: string; type: string }[] | null;
-}
+// ── Excalidraw Element 타입 (단일 SceneElement 사용) ─
+// 과거의 로컬 ExElement 인터페이스는 SceneElement로 통합됨.
+type ExElement = SceneElement;
 
 // ── 상수 ────────────────────────────────────────────
 
@@ -391,4 +366,5 @@ function createArrowElement(
 }
 
 // ── 재내보내기 ──────────────────────────────────────
+// ExElement는 SceneElement의 별칭(하위호환). 신규 코드는 SceneElement 사용 권장.
 export type { ExElement, NodePosition };

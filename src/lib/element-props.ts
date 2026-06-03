@@ -5,16 +5,10 @@
  * 순수 함수로 제공한다. 실제 반영은 호출부에서 updateScene으로 수행.
  */
 
-export interface PropEl {
-  id: string;
-  x?: unknown;
-  y?: unknown;
-  width?: unknown;
-  height?: unknown;
-  angle?: unknown;
-  points?: unknown;
-  [k: string]: unknown;
-}
+import type { SceneElement } from "@/lib/scene/types";
+
+/** 속성 편집 로직이 다루는 요소 = 정규 SceneElement (별칭, 하위호환) */
+export type PropEl = SceneElement;
 
 export type AlignMode =
   | "left"
