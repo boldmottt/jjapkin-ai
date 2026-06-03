@@ -6,6 +6,7 @@ import {
   type SceneFiles,
 } from "@/lib/ai/ir-to-excalidraw";
 import { iconToDataUrl } from "@/lib/icons/render";
+import { applyTheme, THEMES } from "@/lib/themes";
 import { ExcalidrawWrapper, type ExcalidrawElement } from "./ExcalidrawWrapper";
 import { ExportModal } from "@/components/editor/ExportModal";
 import {
@@ -203,6 +204,17 @@ export function CanvasEditor() {
     [sceneElements, selectedIds, applyElements],
   );
 
+  const handleApplyTheme = useCallback(
+    (themeId: string) => {
+      if (sceneElements.length === 0) return;
+      applyElements(applyTheme(sceneElements, themeId));
+      toast.success(
+        `테마 적용: ${THEMES.find((t) => t.id === themeId)?.label ?? themeId}`,
+      );
+    },
+    [applyElements, sceneElements],
+  );
+
   const handleToggleVisibility = useCallback(
     (item: LayerItem) => applyElements(setLayerHidden(sceneElements, item, !item.hidden)),
     [applyElements, sceneElements],
@@ -277,6 +289,25 @@ export function CanvasEditor() {
             : "다이어그램을 생성해주세요"}
         </span>
         <div className="flex-1" />
+        <select
+          aria-label="테마 적용"
+          defaultValue=""
+          disabled={!showExcalidraw}
+          onChange={(e) => {
+            if (e.target.value) handleApplyTheme(e.target.value);
+            e.target.value = "";
+          }}
+          className="rounded border bg-transparent px-2 py-1.5 text-xs outline-none transition-colors hover:border-primary/50 disabled:opacity-30"
+        >
+          <option value="" disabled>
+            🎨 테마
+          </option>
+          {THEMES.map((t) => (
+            <option key={t.id} value={t.id}>
+              {t.label}
+            </option>
+          ))}
+        </select>
         <button
           onClick={() => setShowProps((v) => !v)}
           disabled={!showExcalidraw}
