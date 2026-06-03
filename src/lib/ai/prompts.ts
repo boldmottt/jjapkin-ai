@@ -249,3 +249,36 @@ export function buildMessages(
     user: buildUserPrompt(text, diagramType),
   };
 }
+
+// ── 선택 요소 편집(AI 세부 수정) ───────────────────
+
+export const EDIT_SYSTEM_PROMPT = `You edit selected objects in a diagram based on a user instruction.
+You MUST respond with strict JSON: {"ops":[ ... ]} using ONLY these ops:
+- {"op":"recolor","color":"#RRGGBB"}            // fill color
+- {"op":"recolorStroke","color":"#RRGGBB"}      // border color
+- {"op":"resize","width":N,"height":N}          // either/both, pixels
+- {"op":"opacity","value":0-100}
+- {"op":"strokeWidth","value":0-20}
+- {"op":"fillStyle","value":"solid|hachure|cross-hatch|zigzag"}
+- {"op":"roundness","rounded":true|false}        // rounded corners
+- {"op":"emphasize"}                             // accent border to draw attention
+- {"op":"relabel","text":"new text"}             // change label text
+- {"op":"align","mode":"left|center|right|top|middle|bottom"}   // 2+ objects
+- {"op":"distribute","axis":"horizontal|vertical"}             // 3+ objects
+- {"op":"flip","axis":"horizontal|vertical"}
+- {"op":"shadow"}
+
+Rules:
+- Use 1-5 ops. Choose the minimal ops that satisfy the instruction.
+- Colors MUST be #RRGGBB hex. Keep relabel text in the input's language.
+- Only output JSON, no prose.`;
+
+export function buildEditMessages(
+  instruction: string,
+  selectionSummary: string,
+): { system: string; user: string } {
+  return {
+    system: EDIT_SYSTEM_PROMPT,
+    user: `Selected objects:\n${selectionSummary}\n\nInstruction: "${instruction}"\n\nReturn JSON ops.`,
+  };
+}

@@ -27,6 +27,8 @@ interface PropertiesPanelProps {
   onDistribute: (axis: "horizontal" | "vertical") => void;
   onAddShadow: () => void;
   onSetIcon: (iconId: string) => void;
+  onAiEdit: (instruction: string) => void;
+  aiEditing: boolean;
   onClose: () => void;
 }
 
@@ -70,9 +72,12 @@ export function PropertiesPanel({
   onDistribute,
   onAddShadow,
   onSetIcon,
+  onAiEdit,
+  aiEditing,
   onClose,
 }: PropertiesPanelProps) {
   const [iconInput, setIconInput] = useState("");
+  const [aiInput, setAiInput] = useState("");
   const [hasEyeDropper, setHasEyeDropper] = useState(false);
   useEffect(() => {
     setHasEyeDropper(typeof window !== "undefined" && "EyeDropper" in window);
@@ -111,6 +116,37 @@ export function PropertiesPanel({
       </div>
 
       <div className="flex-1 space-y-3 overflow-y-auto p-3 text-xs">
+        {/* AI 세부 수정 */}
+        <Section label="✦ AI로 수정">
+          <div className="flex items-center gap-1">
+            <input
+              value={aiInput}
+              onChange={(e) => setAiInput(e.target.value)}
+              placeholder="예: 빨갛게, 라벨 짧게, 강조"
+              disabled={aiEditing}
+              className="min-w-0 flex-1 rounded border bg-transparent px-1.5 py-1 outline-none focus:border-primary disabled:opacity-50"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && aiInput.trim() && !aiEditing) {
+                  onAiEdit(aiInput.trim());
+                  setAiInput("");
+                }
+              }}
+            />
+            <button
+              onClick={() => {
+                if (aiInput.trim() && !aiEditing) {
+                  onAiEdit(aiInput.trim());
+                  setAiInput("");
+                }
+              }}
+              disabled={aiEditing || !aiInput.trim()}
+              className="shrink-0 rounded bg-primary px-2 py-1 text-[11px] font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-40"
+            >
+              {aiEditing ? "…" : "적용"}
+            </button>
+          </div>
+        </Section>
+
         {/* 색상 */}
         <Section label="색상">
           <Row label="채움">

@@ -7,6 +7,7 @@ import {
 } from "@/lib/ai/ir-to-excalidraw";
 import { iconToDataUrl } from "@/lib/icons/render";
 import { applyTheme, THEMES } from "@/lib/themes";
+import { applyEditOps } from "@/lib/scene/edit";
 import { useRegisterCommands } from "@/hooks/useCommands";
 import type { Command } from "@/stores/commands";
 import { ExcalidrawWrapper, type ExcalidrawElement } from "./ExcalidrawWrapper";
@@ -202,6 +203,47 @@ export function CanvasEditor() {
       } as unknown as ExcalidrawElement;
       applyElements([...sceneElements, image]);
       toast.success("아이콘 추가됨");
+    },
+    [sceneElements, selectedIds, applyElements],
+  );
+
+  // AI 세부 수정: 선택 객체 + 자연어 지시 → /api/edit → op 적용
+  const [aiEditing, setAiEditing] = useState(false);
+  const handleAiEdit = useCallback(
+    async (instruction: string) => {
+      if (selectedIds.size === 0) {
+        toast.error("수정할 객체를 먼저 선택하세요.");
+        return;
+      }
+      const selection = sceneElements
+        .filter((e) => selectedIds.has(e.id))
+        .map((el) => ({
+          id: el.id,
+          type: String(el.type),
+          label:
+            (el.text as string | undefined) ??
+            (sceneElements.find(
+              (t) => t.type === "text" && t.containerId === el.id,
+            )?.text as string | undefined),
+          backgroundColor: el.backgroundColor as string | undefined,
+        }));
+      setAiEditing(true);
+      try {
+        const res = await fetch("/api/edit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ instruction, selection }),
+        });
+        const json = await res.json();
+        if (!json.success) throw new Error(json.error?.message ?? "AI 수정 실패");
+        const ops = json.data.ops as Parameters<typeof applyEditOps>[2];
+        applyElements(applyEditOps(sceneElements, selectedIds, ops));
+        toast.success(`AI 수정 적용 (${ops.length}개 변경)`);
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "AI 수정 실패");
+      } finally {
+        setAiEditing(false);
+      }
     },
     [sceneElements, selectedIds, applyElements],
   );
@@ -425,6 +467,8 @@ export function CanvasEditor() {
                 onDistribute={handleDistribute}
                 onAddShadow={handleAddShadow}
                 onSetIcon={handleSetIcon}
+                onAiEdit={handleAiEdit}
+                aiEditing={aiEditing}
                 onClose={() => setShowProps(false)}
               />
             )}
