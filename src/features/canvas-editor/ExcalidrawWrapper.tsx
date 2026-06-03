@@ -36,6 +36,8 @@ export interface SceneChangeMeta {
 interface ExcalidrawWrapperProps {
   /** 초기 요소 (IR → Excalidraw 변환 결과) */
   initialElements?: ExcalidrawElement[];
+  /** 초기 파일(아이콘 등 image 요소의 dataURL 맵) */
+  initialFiles?: Record<string, unknown>;
   /** 편집 상태 변경 콜백 (요소 + 선택 등 앱 상태) */
   onChange?: (
     elements: readonly ExcalidrawElement[],
@@ -51,6 +53,7 @@ interface ExcalidrawWrapperProps {
 
 export function ExcalidrawWrapper({
   initialElements,
+  initialFiles,
   onChange,
   onApiReady,
   theme = "light",
@@ -68,6 +71,7 @@ export function ExcalidrawWrapper({
       <ExcalidrawLazy
         initialData={{
           elements: (initialElements ?? []) as never[],
+          files: (initialFiles ?? {}) as never,
           appState: {
             viewBackgroundColor: theme === "dark" ? "#1e1e2e" : "#ffffff",
             theme,

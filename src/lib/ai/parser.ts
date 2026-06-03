@@ -18,6 +18,11 @@ const nodeSchema = z.object({
   color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Invalid hex color").optional(),
   value: z.number().finite().optional(), // bar-chart/funnel 수치
   group: z.string().max(50).optional(), // swimlane 레인
+  icon: z
+    .string()
+    .regex(/^([a-z0-9-]+:)?[a-z0-9-]+$/, "Invalid icon id")
+    .max(60)
+    .optional(), // lucide 아이콘 id
 });
 
 const edgeSchema = z.object({

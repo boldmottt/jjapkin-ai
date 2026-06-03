@@ -46,6 +46,7 @@ export interface DiagramNode {
   children?: DiagramNode[]; // mindmap / hierarchy
   value?: number; // bar-chart/funnel 등 크기/수치 표현
   group?: string; // swimlane 등 그룹/레인 분류
+  icon?: string; // lucide 아이콘 id (예: "lucide:rocket")
 }
 
 /** AI가 생성하는 엣지 */

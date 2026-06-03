@@ -1,7 +1,11 @@
 "use client";
 
 import { useGenerationStore, useEditorLayoutStore } from "@/stores";
-import { irToExcalidraw } from "@/lib/ai/ir-to-excalidraw";
+import {
+  irToExcalidrawWithFiles,
+  type SceneFiles,
+} from "@/lib/ai/ir-to-excalidraw";
+import { iconToDataUrl } from "@/lib/icons/render";
 import { ExcalidrawWrapper, type ExcalidrawElement } from "./ExcalidrawWrapper";
 import { ExportModal } from "@/components/editor/ExportModal";
 import {
@@ -57,18 +61,36 @@ export function CanvasEditor() {
     return candidates.find((c) => c.id === selectedCandidateId) ?? null;
   }, [candidates, selectedCandidateId]);
 
-  const excalidrawElements = useMemo(() => {
-    if (!selectedCandidate) return [];
-    // 이전에 편집해 둔 장면이 있으면 그것을 복원 (후보 전환 시 편집 보존)
-    const saved = useGenerationStore.getState().editedScenes[selectedCandidate.id];
-    if (saved && saved.length > 0) return saved as ExcalidrawElement[];
+  // 장면(요소 + 아이콘 files). 아이콘 files는 IR에서 결정적으로 재생성되므로
+  // 편집 저장본을 복원할 때도 files만 IR에서 다시 계산해 아이콘이 유지된다.
+  const scene = useMemo((): {
+    elements: ExcalidrawElement[];
+    files: SceneFiles;
+  } => {
+    if (!selectedCandidate) return { elements: [], files: {} };
+    let built: { elements: ExcalidrawElement[]; files: SceneFiles };
     try {
-      return irToExcalidraw(selectedCandidate.ir) as ExcalidrawElement[];
+      built = irToExcalidrawWithFiles(selectedCandidate.ir) as {
+        elements: ExcalidrawElement[];
+        files: SceneFiles;
+      };
     } catch (err) {
       console.error("[CanvasEditor] irToExcalidraw failed:", err);
-      return [];
+      return { elements: [], files: {} };
     }
+    const state = useGenerationStore.getState();
+    const saved = state.editedScenes[selectedCandidate.id];
+    const elements =
+      saved && saved.length > 0
+        ? (saved as ExcalidrawElement[])
+        : built.elements;
+    // IR 재생성 아이콘 files + 사용자가 수동 추가/스왑한 files 병합
+    const manualFiles =
+      (state.editedFiles[selectedCandidate.id] as SceneFiles) ?? {};
+    return { elements, files: { ...built.files, ...manualFiles } };
   }, [selectedCandidate]);
+
+  const excalidrawElements = scene.elements;
 
   // 편집 내용을 디바운스 저장 + 레이어/속성 패널용 장면·선택 추적
   const handleSceneChange = useCallback(
@@ -79,7 +101,11 @@ export function CanvasEditor() {
       if (!selectedCandidateId) return;
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
       saveTimerRef.current = setTimeout(() => {
-        saveScene(selectedCandidateId, elements);
+        // 수동 추가 아이콘 등 files도 함께 저장(저장/복원 시 유지)
+        const files = apiRef.current?.getFiles() as
+          | Record<string, unknown>
+          | undefined;
+        saveScene(selectedCandidateId, elements, files);
       }, 500);
     },
     [selectedCandidateId, saveScene],
@@ -127,6 +153,54 @@ export function CanvasEditor() {
   const handleAddShadow = useCallback(
     () => applyElements(createShadows(sceneElements, selectedIds)),
     [applyElements, sceneElements, selectedIds],
+  );
+
+  // 선택한 도형 좌상단에 아이콘(image 요소)을 얹는다. 파일은 API에 추가하고,
+  // 다음 onChange에서 editedFiles로 저장되어 저장/복원 시 유지된다.
+  const handleSetIcon = useCallback(
+    (iconId: string) => {
+      const api = apiRef.current;
+      if (!api) return;
+      const target = sceneElements.find((e) => selectedIds.has(e.id));
+      if (!target) {
+        toast.error("아이콘을 넣을 도형을 먼저 선택하세요.");
+        return;
+      }
+      const dataURL = iconToDataUrl(iconId, "#1F2937", 48);
+      if (!dataURL) {
+        toast.error("아이콘을 찾을 수 없습니다.");
+        return;
+      }
+      const fileId = `iconmanual_${target.id}`;
+      api.addFiles([
+        {
+          mimeType: "image/svg+xml",
+          id: fileId,
+          dataURL,
+          created: Date.now(),
+        } as never,
+      ]);
+      const tx = (target.x as number) ?? 0;
+      const ty = (target.y as number) ?? 0;
+      const image: ExcalidrawElement = {
+        type: "image",
+        id: `iconimg_manual_${target.id}_${Date.now()}`,
+        x: tx + 8,
+        y: ty + 8,
+        width: 22,
+        height: 22,
+        angle: 0,
+        opacity: 100,
+        fileId,
+        status: "saved",
+        scale: [1, 1],
+        locked: false,
+        boundElements: null,
+      } as unknown as ExcalidrawElement;
+      applyElements([...sceneElements, image]);
+      toast.success("아이콘 추가됨");
+    },
+    [sceneElements, selectedIds, applyElements],
   );
 
   const handleToggleVisibility = useCallback(
@@ -255,6 +329,7 @@ export function CanvasEditor() {
               // 후보가 바뀌면 remount하여 해당 후보의 (편집된) 장면을 로드
               key={selectedCandidateId}
               initialElements={excalidrawElements}
+              initialFiles={scene.files}
               onApiReady={(api) => {
                 apiRef.current = api;
                 setSceneElements(
@@ -282,6 +357,7 @@ export function CanvasEditor() {
                 onAlign={handleAlign}
                 onDistribute={handleDistribute}
                 onAddShadow={handleAddShadow}
+                onSetIcon={handleSetIcon}
                 onClose={() => setShowProps(false)}
               />
             )}

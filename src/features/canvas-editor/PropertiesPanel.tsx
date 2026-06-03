@@ -17,6 +17,7 @@ import {
   type AlignMode,
 } from "@/lib/element-props";
 import { num } from "@/lib/scene/geometry";
+import { iconToDataUrl } from "@/lib/icons/render";
 
 interface PropertiesPanelProps {
   elements: PropEl[]; // 선택된 요소들
@@ -25,8 +26,25 @@ interface PropertiesPanelProps {
   onAlign: (mode: AlignMode) => void;
   onDistribute: (axis: "horizontal" | "vertical") => void;
   onAddShadow: () => void;
+  onSetIcon: (iconId: string) => void;
   onClose: () => void;
 }
+
+// 자주 쓰는 lucide 아이콘 빠른 선택 + 직접 입력
+const QUICK_ICONS = [
+  "rocket",
+  "star",
+  "check",
+  "shield-check",
+  "users",
+  "database",
+  "credit-card",
+  "settings",
+  "lightbulb",
+  "flag",
+  "bell",
+  "heart",
+];
 
 const ROUNDABLE = new Set(["rectangle", "diamond", "line"]);
 
@@ -51,8 +69,10 @@ export function PropertiesPanel({
   onAlign,
   onDistribute,
   onAddShadow,
+  onSetIcon,
   onClose,
 }: PropertiesPanelProps) {
+  const [iconInput, setIconInput] = useState("");
   const [hasEyeDropper, setHasEyeDropper] = useState(false);
   useEffect(() => {
     setHasEyeDropper(typeof window !== "undefined" && "EyeDropper" in window);
@@ -314,6 +334,49 @@ export function PropertiesPanel({
           </Section>
         )}
 
+        {/* 아이콘 */}
+        {single && (
+          <Section label="아이콘">
+            <div className="grid grid-cols-6 gap-1">
+              {QUICK_ICONS.map((name) => (
+                <button
+                  key={name}
+                  onClick={() => onSetIcon(name)}
+                  title={name}
+                  className="flex aspect-square items-center justify-center rounded border text-[14px] transition-colors hover:border-primary/50"
+                >
+                  <IconThumb name={name} />
+                </button>
+              ))}
+            </div>
+            <div className="flex items-center gap-1 pt-1">
+              <input
+                value={iconInput}
+                onChange={(e) => setIconInput(e.target.value)}
+                placeholder="lucide 이름 (예: rocket)"
+                className="min-w-0 flex-1 rounded border bg-transparent px-1.5 py-1 text-[11px] outline-none focus:border-primary"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && iconInput.trim()) {
+                    onSetIcon(iconInput.trim());
+                    setIconInput("");
+                  }
+                }}
+              />
+              <button
+                onClick={() => {
+                  if (iconInput.trim()) {
+                    onSetIcon(iconInput.trim());
+                    setIconInput("");
+                  }
+                }}
+                className="rounded border px-2 py-1 text-[11px] transition-colors hover:border-primary/50"
+              >
+                추가
+              </button>
+            </div>
+          </Section>
+        )}
+
         {/* 정렬 (다중 선택) */}
         {multi && (
           <Section label="정렬">
@@ -361,6 +424,14 @@ export function PropertiesPanel({
 }
 
 // ── 보조 컴포넌트 ───────────────────────────────────
+
+/** 아이콘 미리보기 썸네일 (lucide → dataURL) */
+function IconThumb({ name }: { name: string }) {
+  const url = iconToDataUrl(name, "#334155", 18);
+  if (!url) return <span className="text-[10px] text-muted-foreground">?</span>;
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src={url} alt={name} className="h-[18px] w-[18px]" />;
+}
 
 function Section({ label, children }: { label: string; children: React.ReactNode }) {
   return (

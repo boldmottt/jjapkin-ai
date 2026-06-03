@@ -36,11 +36,17 @@ interface GenerationState {
    * (요소 형태는 Excalidraw 내부 타입이라 unknown[]으로 느슨하게 보관)
    */
   editedScenes: Record<string, readonly unknown[]>;
+  /** 후보 id → 사용자가 추가/스왑한 아이콘 등 files 맵(수동 아이콘 유지용) */
+  editedFiles: Record<string, Record<string, unknown>>;
 
   setStatus: (status: GenerationStatus) => void;
   setCandidates: (candidates: GenerationCandidate[]) => void;
   selectCandidate: (id: string) => void;
-  saveScene: (candidateId: string, elements: readonly unknown[]) => void;
+  saveScene: (
+    candidateId: string,
+    elements: readonly unknown[],
+    files?: Record<string, unknown>,
+  ) => void;
   /** 영속화된 문서에서 단일 다이어그램을 복원 */
   hydratePersisted: (
     candidate: GenerationCandidate,
@@ -56,6 +62,7 @@ export const useGenerationStore = create<GenerationState>((set) => ({
   selectedCandidateId: null,
   error: null,
   editedScenes: {},
+  editedFiles: {},
 
   setStatus: (status) => set({ status }),
   setCandidates: (candidates) =>
@@ -65,13 +72,17 @@ export const useGenerationStore = create<GenerationState>((set) => ({
       selectedCandidateId: candidates[0]?.id ?? null,
       // 새 생성 결과이므로 이전 편집 캐시는 비움
       editedScenes: {},
+      editedFiles: {},
       status: "success",
       error: null,
     }),
   selectCandidate: (id) => set({ selectedCandidateId: id }),
-  saveScene: (candidateId, elements) =>
+  saveScene: (candidateId, elements, files) =>
     set((s) => ({
       editedScenes: { ...s.editedScenes, [candidateId]: elements },
+      editedFiles: files
+        ? { ...s.editedFiles, [candidateId]: files }
+        : s.editedFiles,
     })),
   hydratePersisted: (candidate, elements) =>
     set({
@@ -89,6 +100,7 @@ export const useGenerationStore = create<GenerationState>((set) => ({
       selectedCandidateId: null,
       error: null,
       editedScenes: {},
+      editedFiles: {},
     }),
 }));
 

@@ -52,6 +52,11 @@ Node types:
 - "end": 종료점, 보통 빨간색(#EF4444)
 - 기본값: 없으면 "process"
 
+Icons (optional but recommended):
+- You MAY add an "icon" field to a node using a lucide icon name (kebab-case),
+  e.g. "icon":"rocket", "credit-card", "shield-check", "users", "database".
+- Pick an icon that matches the node's meaning. Omit if unsure.
+
 Color suggestions per diagram type:
 - flowchart: blue process nodes, green start, red end, orange decisions
 - mindmap: root node darker, children lighter tones

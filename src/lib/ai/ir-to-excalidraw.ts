@@ -11,6 +11,7 @@ import type { SceneElement } from "@/lib/scene/types";
 import { getLayout } from "@/lib/layout/registry";
 import type { NodePosition } from "@/lib/layout/types";
 import { NODE_W, NODE_H } from "@/lib/layout/constants";
+import { iconToDataUrl } from "@/lib/icons/render";
 
 // ── Excalidraw Element 타입 (단일 SceneElement 사용) ─
 // 과거의 로컬 ExElement 인터페이스는 SceneElement로 통합됨.
@@ -70,6 +71,65 @@ export function irToExcalidraw(ir: DiagramIR): ExElement[] {
   }
 
   return elements;
+}
+
+// ── 아이콘 포함 변환 (image 요소 + files) ────────────
+
+/** Excalidraw BinaryFiles 호환(느슨) */
+export type SceneFiles = Record<
+  string,
+  { mimeType: string; id: string; dataURL: string; created: number }
+>;
+
+const ICON_SIZE = 22;
+const ICON_PAD = 8;
+
+/**
+ * 아이콘까지 포함해 변환한다. 아이콘은 image 요소로 추가되고, 그 dataURL은
+ * files 맵에 담긴다. 아이콘은 IR의 node.icon에서 결정적으로 재생성되므로
+ * files를 따로 영속화할 필요가 없다(저장/복원 시 IR에서 재계산).
+ */
+export function irToExcalidrawWithFiles(ir: DiagramIR): {
+  elements: ExElement[];
+  files: SceneFiles;
+} {
+  const elements = irToExcalidraw(ir);
+  const files: SceneFiles = {};
+
+  const positions = getLayout(ir.diagramType)(ir.nodes, ir.edges);
+  const nodeById = new Map(ir.nodes.map((n) => [n.id, n]));
+
+  for (const pos of positions) {
+    const node = nodeById.get(pos.id);
+    if (!node?.icon) continue;
+    const dataURL = iconToDataUrl(node.icon, pos.textColor ?? "#1F2937", 48);
+    if (!dataURL) continue;
+
+    const fileId = `iconfile_${pos.id}`;
+    files[fileId] = {
+      mimeType: "image/svg+xml",
+      id: fileId,
+      dataURL,
+      created: 0, // 결정적(스냅샷 안정) — 실제 시각은 불필요
+    };
+    elements.push({
+      type: "image",
+      id: `iconimg_${pos.id}`,
+      x: pos.x + ICON_PAD,
+      y: pos.y + ICON_PAD,
+      width: ICON_SIZE,
+      height: ICON_SIZE,
+      angle: 0,
+      opacity: 100,
+      fileId,
+      status: "saved",
+      scale: [1, 1],
+      locked: false,
+      boundElements: null,
+    } as unknown as ExElement);
+  }
+
+  return { elements, files };
 }
 
 // ── Element 생성기 ──────────────────────────────────
