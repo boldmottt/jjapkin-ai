@@ -55,6 +55,7 @@ export function CanvasEditor() {
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [showLayers, setShowLayers] = useState(false);
   const [showProps, setShowProps] = useState(true);
+  const [suggestDismissed, setSuggestDismissed] = useState(false);
   const [sceneElements, setSceneElements] = useState<readonly ExcalidrawElement[]>([]);
   const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(new Set());
   const apiRef = useRef<ExcalidrawImperativeAPI | null>(null);
@@ -120,12 +121,25 @@ export function CanvasEditor() {
     setSceneElements([]);
     setSelectedIds(new Set());
     setShowLayers(false);
+    setSuggestDismissed(false);
   }, [selectedCandidateId]);
 
   const applyElements = useCallback((next: readonly ExcalidrawElement[]) => {
     apiRef.current?.updateScene({ elements: next as never });
     setSceneElements(next);
   }, []);
+
+  // 스마트 제안: 첫 노드 강조
+  const handleSuggestEmphasize = useCallback(() => {
+    const first = sceneElements.find((e) =>
+      ["rectangle", "ellipse", "diamond"].includes(String(e.type)),
+    );
+    if (!first) return;
+    applyElements(
+      applyEditOps(sceneElements, new Set([first.id]), [{ op: "emphasize" }]),
+    );
+    toast.success("첫 노드 강조");
+  }, [sceneElements, applyElements]);
 
   const layerItems = useMemo(() => buildLayers(sceneElements), [sceneElements]);
 
@@ -475,6 +489,36 @@ export function CanvasEditor() {
               onChange={handleSceneChange}
               theme="light"
             />
+            {!suggestDismissed && sceneElements.length > 0 && (
+              <div className="absolute left-1/2 top-3 z-10 flex -translate-x-1/2 items-center gap-1.5 rounded-full border bg-background/95 px-2 py-1 text-xs shadow-md backdrop-blur">
+                <span className="px-1 text-muted-foreground">제안</span>
+                <button
+                  onClick={handleBeautify}
+                  className="rounded-full border px-2 py-0.5 transition-colors hover:border-primary/50"
+                >
+                  ✨ 정리
+                </button>
+                <button
+                  onClick={handleSuggestEmphasize}
+                  className="rounded-full border px-2 py-0.5 transition-colors hover:border-primary/50"
+                >
+                  ⭐ 첫 노드 강조
+                </button>
+                <button
+                  onClick={() => handleApplyTheme("corporate")}
+                  className="rounded-full border px-2 py-0.5 transition-colors hover:border-primary/50"
+                >
+                  🎨 테마
+                </button>
+                <button
+                  onClick={() => setSuggestDismissed(true)}
+                  aria-label="제안 닫기"
+                  className="rounded-full px-1 text-muted-foreground hover:text-foreground"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
             {showLayers && (
               <LayersPanel
                 items={layerItems}
