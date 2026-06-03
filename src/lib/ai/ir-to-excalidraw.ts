@@ -1,31 +1,27 @@
 /**
- * IR → Excalidraw 변환기
+ * IR → Excalidraw 변환기 (어댑터)
  *
- * DiagramIR의 노드/엣지 구조를 Excalidraw Elements 배열로 변환합니다.
- * 자동 레이아웃을 포함한 완전한 변환 파이프라인.
+ * DiagramIR의 노드/엣지를 Excalidraw Elements 배열로 변환한다.
+ * 노드 배치(레이아웃)는 타입별 엔진(lib/layout)이 담당하고, 이 파일은
+ * "레이아웃 호출 + Excalidraw 요소 생성"만 맡는 얇은 어댑터다.
  */
 
-import type { DiagramIR, DiagramType } from "@/types";
+import type { DiagramIR } from "@/types";
 import type { SceneElement } from "@/lib/scene/types";
-import { DEFAULT_NODE_COLORS } from "./parser";
+import { getLayout } from "@/lib/layout/registry";
+import type { NodePosition } from "@/lib/layout/types";
+import { NODE_W, NODE_H } from "@/lib/layout/constants";
 
 // ── Excalidraw Element 타입 (단일 SceneElement 사용) ─
 // 과거의 로컬 ExElement 인터페이스는 SceneElement로 통합됨.
 type ExElement = SceneElement;
 
-// ── 상수 ────────────────────────────────────────────
-
-const NODE_W = 160;
-const NODE_H = 60;
-const H_GAP = 80;  // 수평 간격 (노드 사이)
-const V_GAP = 60;  // 수직 간격 (층 사이)
-const START_X = 100;
-const START_Y = 80;
+// ── 요소 스타일 상수 (레이아웃 상수는 lib/layout/constants) ─
 const FONT_SIZE = 16;
 const STROKE_WIDTH = 2;
 const FONT_FAMILY = 2; // normal
 
-// ── 메인 변환 함수 ──────────────────────────────────
+// ── 메인 변환 함수 (레이아웃 호출 + Excalidraw 어댑터) ─
 
 export function irToExcalidraw(ir: DiagramIR): ExElement[] {
   // ID 생성기를 함수 스코프 클로저로 둠 → 호출마다 0부터 시작하여 멱등성 보장
@@ -35,7 +31,8 @@ export function irToExcalidraw(ir: DiagramIR): ExElement[] {
   const elements: ExElement[] = [];
 
   // 각 노드 → rectangle + (컨테이너 바운드) text
-  const nodePositions = layoutNodes(ir.nodes, ir.edges, ir.diagramType);
+  // 레이아웃은 타입별 엔진(lib/layout)이 담당 → 어댑터는 요소 생성만.
+  const nodePositions = getLayout(ir.diagramType)(ir.nodes, ir.edges);
 
   // node id → rectangle element id (화살표 바인딩에 사용)
   const rectIdByNode = new Map<string, ExElement>();
@@ -73,215 +70,6 @@ export function irToExcalidraw(ir: DiagramIR): ExElement[] {
   }
 
   return elements;
-}
-
-// ── 노드 레이아웃 ───────────────────────────────────
-
-interface NodePosition {
-  id: string;
-  label: string;
-  type: string;
-  color: string;
-  x: number;
-  y: number;
-}
-
-function layoutNodes(
-  nodes: DiagramIR["nodes"],
-  edges: DiagramIR["edges"],
-  diagramType: DiagramType,
-): NodePosition[] {
-  const positions: NodePosition[] = [];
-
-  switch (diagramType) {
-    case "flowchart": {
-      // Top-to-bottom 순차 배치 (분기 노드는 수평 분산)
-      const rows = layoutFlowchartRows(nodes, edges);
-      let y = START_Y;
-      const centerX = 400;
-
-      for (const row of rows) {
-        const rowWidth = (row.length - 1) * (NODE_W + H_GAP);
-        const startX = centerX - rowWidth / 2;
-
-        for (let i = 0; i < row.length; i++) {
-          const node = row[i];
-          positions.push({
-            id: node.id,
-            label: node.label,
-            type: node.type ?? "process",
-            color: node.color ?? DEFAULT_NODE_COLORS[node.type ?? "process"],
-            x: startX + i * (NODE_W + H_GAP),
-            y,
-          });
-        }
-        y += NODE_H + V_GAP;
-      }
-      break;
-    }
-
-    case "mindmap": {
-      // Radial 배치: 루트 중심, 자식 둘러싸기
-      const root = nodes[0];
-      const children = nodes.slice(1);
-      const cx = 400;
-      const cy = 300;
-
-      positions.push({
-        id: root.id,
-        label: root.label,
-        type: "start",
-        color: root.color ?? "#1E40AF",
-        x: cx - NODE_W / 2,
-        y: cy - NODE_H / 2,
-      });
-
-      const radius = 180;
-      const angleStep = (2 * Math.PI) / children.length;
-
-      for (let i = 0; i < children.length; i++) {
-        const angle = -Math.PI / 2 + angleStep * i;
-        const child = children[i];
-        positions.push({
-          id: child.id,
-          label: child.label,
-          type: "process",
-          color: child.color ?? "#3B82F6",
-          x: cx + radius * Math.cos(angle) - NODE_W / 2,
-          y: cy + radius * Math.sin(angle) - NODE_H / 2,
-        });
-      }
-      break;
-    }
-
-    case "process": {
-      // Left-to-right 선형 배치
-      let x = START_X;
-      const y = 300 - NODE_H / 2;
-
-      for (const node of nodes) {
-        positions.push({
-          id: node.id,
-          label: node.label,
-          type: node.type ?? "process",
-          color: node.color ?? DEFAULT_NODE_COLORS[node.type ?? "process"],
-          x,
-          y,
-        });
-        x += NODE_W + H_GAP;
-      }
-      break;
-    }
-
-    case "comparison": {
-      // 좌/우 컬럼 매트릭스
-      const leftNodes = nodes.filter((_, i) => i % 2 === 0);
-      const rightNodes = nodes.filter((_, i) => i % 2 === 1);
-      const leftX = 150;
-      const rightX = 500;
-
-      const placeColumn = (column: typeof nodes, startX: number) => {
-        let y = START_Y;
-        for (const node of column) {
-          positions.push({
-            id: node.id,
-            label: node.label,
-            type: "process",
-            color: node.color ?? (startX < 400 ? "#93C5FD" : "#FCD34D"),
-            x: startX,
-            y,
-          });
-          y += NODE_H + V_GAP;
-        }
-      };
-
-      placeColumn(leftNodes, leftX);
-      placeColumn(rightNodes, rightX);
-      break;
-    }
-
-    case "list": {
-      // 세로 리스트, 교차 배경색
-      let y = START_Y;
-      const x = 250;
-
-      for (let i = 0; i < nodes.length; i++) {
-        const node = nodes[i];
-        positions.push({
-          id: node.id,
-          label: node.label,
-          type: "process",
-          color: node.color ?? (i % 2 === 0 ? "#F3F4F6" : "#E5E7EB"),
-          x,
-          y,
-        });
-        y += NODE_H + V_GAP;
-      }
-      break;
-    }
-  }
-
-  return positions;
-}
-
-// ── Flowchart 레이아웃 (Topological sort + row 분할) ──
-
-function layoutFlowchartRows(
-  nodes: DiagramIR["nodes"],
-  edges: DiagramIR["edges"],
-): Array<DiagramIR["nodes"]> {
-  const rows: Array<DiagramIR["nodes"]> = [];
-  const inDegree = new Map<string, number>();
-  const outEdges = new Map<string, string[]>();
-  const nodeMap = new Map(nodes.map((n) => [n.id, n]));
-
-  for (const n of nodes) {
-    inDegree.set(n.id, 0);
-    outEdges.set(n.id, []);
-  }
-
-  for (const e of edges) {
-    const out = outEdges.get(e.from);
-    if (out) out.push(e.to);
-    inDegree.set(e.to, (inDegree.get(e.to) ?? 0) + 1);
-  }
-
-  // BFS 위상 정렬로 row 단위 그룹화
-  let queue = nodes.filter((n) => inDegree.get(n.id) === 0);
-  const visited = new Set<string>();
-
-  while (queue.length > 0) {
-    const row = [...queue];
-    rows.push(row);
-    visited.clear();
-
-    const nextQueue: typeof queue = [];
-    for (const node of queue) {
-      const children = outEdges.get(node.id) ?? [];
-      for (const childId of children) {
-        if (visited.has(childId)) continue; // 같은 row에 중복 추가 방지
-        const deg = (inDegree.get(childId) ?? 1) - 1;
-        inDegree.set(childId, deg);
-        if (deg === 0) {
-          visited.add(childId);
-          const childNode = nodeMap.get(childId);
-          if (childNode) nextQueue.push(childNode);
-        }
-      }
-    }
-
-    queue = nextQueue;
-  }
-
-  // 남은 노드 (사이클 등) 마지막 row에 추가
-  const remaining = nodes.filter((n) => {
-    return !rows.some((r) => r.some((rn) => rn.id === n.id));
-  });
-  if (remaining.length > 0) {
-    rows.push(remaining);
-  }
-
-  return rows;
 }
 
 // ── Element 생성기 ──────────────────────────────────
