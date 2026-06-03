@@ -11,6 +11,7 @@ import { applyEditOps } from "@/lib/scene/edit";
 import { useRegisterCommands } from "@/hooks/useCommands";
 import type { Command } from "@/stores/commands";
 import { ExcalidrawWrapper, type ExcalidrawElement } from "./ExcalidrawWrapper";
+import { ExcalidrawErrorBoundary } from "./ExcalidrawErrorBoundary";
 import { ExportModal } from "@/components/editor/ExportModal";
 import {
   exportToPng,
@@ -475,6 +476,7 @@ export function CanvasEditor() {
           </div>
         ) : showExcalidraw ? (
           <>
+            <ExcalidrawErrorBoundary>
             <ExcalidrawWrapper
               // 후보가 바뀌면 remount하여 해당 후보의 (편집된) 장면을 로드
               key={selectedCandidateId}
@@ -489,6 +491,7 @@ export function CanvasEditor() {
               onChange={handleSceneChange}
               theme="light"
             />
+            </ExcalidrawErrorBoundary>
             {!suggestDismissed && sceneElements.length > 0 && (
               <div className="absolute left-1/2 top-3 z-10 flex -translate-x-1/2 items-center gap-1.5 rounded-full border bg-background/95 px-2 py-1 text-xs shadow-md backdrop-blur">
                 <span className="px-1 text-muted-foreground">제안</span>
