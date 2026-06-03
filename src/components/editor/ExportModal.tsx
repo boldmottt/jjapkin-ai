@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Download, FileImage, FileText, Presentation, PenTool } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 
-export type ExportFormat = "ai-svg" | "ai-pdf" | "eps" | "png" | "svg" | "pptx" | "pdf";
+export type ExportFormat = "ai-svg" | "ai-pdf" | "png" | "svg" | "pptx" | "pdf";
 
 interface ExportModalProps {
   open: boolean;
@@ -33,15 +33,7 @@ const FORMATS: {
     label: "Illustrator PDF",
     icon: PenTool,
     ext: ".ai.pdf",
-    desc: "Illustrator에서 PDF 열기로 편집. 벡터 유지",
-    priority: true,
-  },
-  {
-    id: "eps",
-    label: "EPS (Illustrator)",
-    icon: PenTool,
-    ext: ".eps",
-    desc: "레거시 PostScript. 모든 버전의 Illustrator 호환",
+    desc: "Illustrator에서 PDF 열기로 편집 (A3, 고해상도 이미지)",
     priority: true,
   },
   {

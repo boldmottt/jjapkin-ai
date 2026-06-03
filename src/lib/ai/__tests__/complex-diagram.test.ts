@@ -122,7 +122,7 @@ function inspect(elements: ExElement[]): SceneReport {
     boundArrows,
     danglingTextRefs,
     danglingArrowRefs,
-    duplicateIds: [...new Set(duplicateIds)],
+    duplicateIds: Array.from(new Set(duplicateIds)),
     nanCoords: nanCoords + (idSet.size === ids.length ? 0 : 0),
   };
 }

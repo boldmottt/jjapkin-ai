@@ -11,7 +11,6 @@ import {
   exportToPdf,
   exportToIllustratorSvg,
   exportToIllustratorPdf,
-  exportToEps,
 } from "../export-pipeline";
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import type { ExportFormat } from "@/components/editor/ExportModal";
@@ -179,9 +178,6 @@ export function CanvasEditor() {
             break;
           case "ai-pdf":
             await exportToIllustratorPdf({ api, filename: title, title });
-            break;
-          case "eps":
-            await exportToEps({ api, filename: title, title });
             break;
           case "png":
             await exportToPng({ api, filename: title });

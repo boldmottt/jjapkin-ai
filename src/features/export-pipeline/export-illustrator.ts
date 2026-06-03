@@ -5,9 +5,8 @@
  * 라이브 Excalidraw 장면을 공식 exportToSvg로 추출한 뒤 가공한다.
  *
  * 지원 형식:
- *  - .ai.svg  — Illustrator 최적화 SVG (레이어 / 네임스페이스 포함)
+ *  - .ai.svg  — Illustrator 최적화 SVG (레이어 / 네임스페이스 포함, 벡터)
  *  - .ai.pdf  — Illustrator에서 열 수 있는 PDF (A3, 고해상도 래스터)
- *  - .eps     — Encapsulated PostScript (레거시, SVG 데이터 임베드)
  */
 
 import {
@@ -114,27 +113,6 @@ export async function exportToIllustratorPdf(
 }
 
 // ─────────────────────────────────────────────────────
-// 3. EPS (Encapsulated PostScript)
-// ─────────────────────────────────────────────────────
-
-interface EpsOptions {
-  api: SceneApi;
-  filename?: string;
-  title?: string;
-}
-
-export async function exportToEps(opts: EpsOptions): Promise<void> {
-  const { api, filename = "diagram", title = "Diagram" } = opts;
-
-  const svg = await sceneToSvg(api, { background: true });
-  const svgText = new XMLSerializer().serializeToString(svg);
-  const epsContent = svgToEps(svgText, title);
-
-  const blob = new Blob([epsContent], { type: "application/postscript" });
-  downloadBlob(blob, `${filename}.eps`);
-}
-
-// ─────────────────────────────────────────────────────
 // 유틸리티
 // ─────────────────────────────────────────────────────
 
@@ -169,34 +147,4 @@ function imageSize(dataUrl: string): Promise<{ width: number; height: number }> 
     img.onerror = reject;
     img.src = dataUrl;
   });
-}
-
-/**
- * SVG → EPS 변환 (간소화)
- * 실제 프로덕션에서는 전용 라이브러리 사용 권장
- */
-function svgToEps(svg: string, title: string): string {
-  const header = [
-    "%!PS-Adobe-3.0 EPSF-3.0",
-    `%%Title: ${title}`,
-    "%%Creator: JJapkin AI",
-    `%%CreationDate: ${new Date().toISOString()}`,
-    "%%LanguageLevel: 3",
-    "%%BoundingBox: 0 0 800 600",
-    "%%DocumentData: Clean7Bit",
-    "%%EndComments",
-    "",
-    "%%BeginProlog",
-    "/ai { } def",
-    "%%EndProlog",
-    "",
-  ].join("\n");
-
-  const note =
-    "%% Illustrator에서 열기: File > Open > 이 EPS 파일 선택\n" +
-    "%% 더 나은 편집을 위해 .ai.svg 또는 .ai.pdf 사용을 권장합니다.\n" +
-    "%% SVG 데이터가 포함되어 있습니다.\n\n" +
-    svg.replace(/</g, "%%<").replace(/>/g, ">%%");
-
-  return header + note + "\n%%EOF\n";
 }

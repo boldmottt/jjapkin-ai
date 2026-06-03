@@ -6,5 +6,4 @@ export { exportToPdf } from "./export-pdf";
 export {
   exportToIllustratorSvg,
   exportToIllustratorPdf,
-  exportToEps,
 } from "./export-illustrator";
