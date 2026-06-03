@@ -34,7 +34,7 @@ type Env = z.infer<typeof envSchema>;
 let _envCache: Env | null = null;
 
 function loadAndValidate(): Env {
-  const parsed = envSchema.safeParse({
+  const raw = {
     DEEPSEEK_API_KEY: process.env.DEEPSEEK_API_KEY,
     DEEPSEEK_BASE_URL: process.env.DEEPSEEK_BASE_URL,
     DEEPSEEK_MODEL: process.env.DEEPSEEK_MODEL,
@@ -45,17 +45,43 @@ function loadAndValidate(): Env {
     DIRECT_URL: process.env.DIRECT_URL,
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
     NEXT_PUBLIC_APP_NAME: process.env.NEXT_PUBLIC_APP_NAME,
-  });
+  };
 
-  if (!parsed.success) {
-    console.error(
-      "❌ Invalid environment variables:",
-      JSON.stringify(parsed.error.format(), null, 2),
-    );
-    throw new Error("Invalid environment variables. Check .env.local");
+  const parsed = envSchema.safeParse(raw);
+  if (parsed.success) return parsed.data;
+
+  // 중요: 여기서 throw하면 env에 접근하는 모듈 로드/라우트가 통째로 죽어
+  // 클라이언트가 JSON 대신 HTML 500을 받게 된다("Unexpected token '<'").
+  // → 절대 throw하지 않고, 경고만 남긴 뒤 안전한 폴백 값을 만든다.
+  // 실제 키가 필요한 시점(AI 호출 등)에서 각 라우트가 JSON 에러로 안내한다.
+  console.warn(
+    "⚠️ 환경변수가 누락/형식 오류 — 누락 키는 비활성(빈 값)으로 동작합니다. .env.local 확인:",
+    JSON.stringify(parsed.error.flatten().fieldErrors),
+  );
+
+  return {
+    DEEPSEEK_API_KEY: raw.DEEPSEEK_API_KEY ?? "",
+    DEEPSEEK_BASE_URL: raw.DEEPSEEK_BASE_URL || "https://api.deepseek.com",
+    DEEPSEEK_MODEL: raw.DEEPSEEK_MODEL || "deepseek-chat",
+    DEEPSEEK_VISION_MODEL: raw.DEEPSEEK_VISION_MODEL || "deepseek-chat",
+    OPENAI_API_KEY: raw.OPENAI_API_KEY,
+    ANTHROPIC_API_KEY: raw.ANTHROPIC_API_KEY,
+    // url 검증 실패 시 비활성(undefined) 처리 → prisma는 null로 동작
+    DATABASE_URL: isUrl(raw.DATABASE_URL) ? raw.DATABASE_URL : undefined,
+    DIRECT_URL: isUrl(raw.DIRECT_URL) ? raw.DIRECT_URL : undefined,
+    NEXT_PUBLIC_APP_URL: raw.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+    NEXT_PUBLIC_APP_NAME: raw.NEXT_PUBLIC_APP_NAME || "JJapkin AI",
+  };
+}
+
+function isUrl(v: string | undefined): v is string {
+  if (!v) return false;
+  try {
+    new URL(v);
+    return true;
+  } catch {
+    return false;
   }
-
-  return parsed.data;
 }
 
 export const env: Env = new Proxy({} as Env, {

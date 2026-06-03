@@ -73,6 +73,11 @@ export interface ChatCompletionResult {
 export async function chatCompletion(
   opts: ChatCompletionOptions,
 ): Promise<ChatCompletionResult> {
+  if (!env.DEEPSEEK_API_KEY) {
+    throw new Error(
+      "DEEPSEEK_API_KEY가 설정되지 않았습니다(.env.local 확인).",
+    );
+  }
   const client = getDeepSeekClient();
   const model = opts.model ?? env.DEEPSEEK_MODEL;
 

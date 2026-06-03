@@ -8,6 +8,7 @@ import {
 import { iconToDataUrl } from "@/lib/icons/render";
 import { applyTheme, THEMES } from "@/lib/themes";
 import { applyEditOps } from "@/lib/scene/edit";
+import { readJsonResponse } from "@/lib/api-client";
 import { useRegisterCommands } from "@/hooks/useCommands";
 import type { Command } from "@/stores/commands";
 import { ExcalidrawWrapper, type ExcalidrawElement } from "./ExcalidrawWrapper";
@@ -248,9 +249,13 @@ export function CanvasEditor() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ instruction, selection }),
         });
-        const json = await res.json();
+        const json = await readJsonResponse<{
+          success: boolean;
+          error?: { message?: string };
+          data: { ops: Parameters<typeof applyEditOps>[2] };
+        }>(res);
         if (!json.success) throw new Error(json.error?.message ?? "AI 수정 실패");
-        const ops = json.data.ops as Parameters<typeof applyEditOps>[2];
+        const ops = json.data.ops;
         applyElements(applyEditOps(sceneElements, selectedIds, ops));
         toast.success(`AI 수정 적용 (${ops.length}개 변경)`);
       } catch (err) {
