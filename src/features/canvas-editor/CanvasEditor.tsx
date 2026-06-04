@@ -130,6 +130,16 @@ export function CanvasEditor() {
     setSceneElements(next);
   }, []);
 
+  // Excalidraw API 준비 콜백 — 반드시 "안정적인" 참조여야 한다.
+  // 매 렌더 새 함수를 넘기면 Excalidraw 내부 effect([excalidrawAPI] 의존)가
+  // 매번 재실행 → setSceneElements → 재렌더 → 무한 루프(Maximum update depth).
+  const handleApiReady = useCallback((api: ExcalidrawImperativeAPI) => {
+    apiRef.current = api;
+    setSceneElements(
+      api.getSceneElements() as unknown as readonly ExcalidrawElement[],
+    );
+  }, []);
+
   // 스마트 제안: 첫 노드 강조
   const handleSuggestEmphasize = useCallback(() => {
     const first = sceneElements.find((e) =>
@@ -485,12 +495,7 @@ export function CanvasEditor() {
               key={selectedCandidateId}
               initialElements={excalidrawElements}
               initialFiles={scene.files}
-              onApiReady={(api) => {
-                apiRef.current = api;
-                setSceneElements(
-                  api.getSceneElements() as unknown as readonly ExcalidrawElement[],
-                );
-              }}
+              onApiReady={handleApiReady}
               onChange={handleSceneChange}
               theme="light"
             />

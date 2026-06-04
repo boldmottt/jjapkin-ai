@@ -14,7 +14,7 @@
  */
 
 import dynamic from "next/dynamic";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import type { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types";
 import type { SceneElement } from "@/lib/scene/types";
 
@@ -66,36 +66,47 @@ export function ExcalidrawWrapper({
     [onChange],
   );
 
+  // 객체 prop은 "안정적인" 참조여야 한다. 매 렌더 새 객체를 넘기면 Excalidraw가
+  // 끊임없이 재렌더(내부 tunnel-rat 포함)되어 무한 루프로 이어질 수 있다.
+  // (컴포넌트는 후보별 key로 remount되므로 deps는 마운트당 한 번만 바뀜)
+  const initialData = useMemo(
+    () => ({
+      elements: (initialElements ?? []) as never[],
+      files: (initialFiles ?? {}) as never,
+      appState: {
+        viewBackgroundColor: theme === "dark" ? "#1e1e2e" : "#ffffff",
+        theme,
+      },
+    }),
+    [initialElements, initialFiles, theme],
+  );
+
+  const uiOptions = useMemo(
+    () => ({
+      canvasActions: {
+        changeViewBackgroundColor: false,
+        clearCanvas: !readOnly,
+        export: false as const,
+        loadScene: false,
+        saveToActiveFile: false,
+        toggleTheme: true,
+        saveAsImage: false,
+      },
+      tools: { image: false },
+    }),
+    [readOnly],
+  );
+
   return (
     <div className="h-full w-full">
       <ExcalidrawLazy
-        initialData={{
-          elements: (initialElements ?? []) as never[],
-          files: (initialFiles ?? {}) as never,
-          appState: {
-            viewBackgroundColor: theme === "dark" ? "#1e1e2e" : "#ffffff",
-            theme,
-          },
-        }}
+        initialData={initialData}
         excalidrawAPI={onApiReady}
         onChange={handleChange as never}
         viewModeEnabled={readOnly}
         zenModeEnabled={false}
         gridModeEnabled={false}
-        UIOptions={{
-          canvasActions: {
-            changeViewBackgroundColor: false,
-            clearCanvas: !readOnly,
-            export: false,
-            loadScene: false,
-            saveToActiveFile: false,
-            toggleTheme: true,
-            saveAsImage: false,
-          },
-          tools: {
-            image: false,
-          },
-        }}
+        UIOptions={uiOptions}
       />
     </div>
   );
