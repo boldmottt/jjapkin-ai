@@ -14,6 +14,9 @@ import { env } from "@/lib/env";
 let _deepseekClient: OpenAI | null = null;
 
 export function getDeepSeekClient(): OpenAI {
+  if (!env.DEEPSEEK_API_KEY) {
+    throw new Error("DeepSeek API 키가 설정되지 않았습니다. .env.local 파일을 확인해주세요.");
+  }
   if (!_deepseekClient) {
     _deepseekClient = new OpenAI({
       apiKey: env.DEEPSEEK_API_KEY,
