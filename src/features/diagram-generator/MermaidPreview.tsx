@@ -14,6 +14,23 @@ interface MermaidPreviewProps {
   visible: boolean;
 }
 
+// Mermaid 다이어그램 시작 키워드(이걸로 시작해야 Mermaid로 간주)
+const MERMAID_KEYWORDS =
+  /^(flowchart|graph|sequenceDiagram|classDiagram|stateDiagram(-v2)?|erDiagram|journey|gantt|pie|mindmap|timeline|gitGraph|quadrantChart|requirementDiagram|C4Context|sankey(-beta)?|xychart(-beta)?|block(-beta)?)\b/;
+
+/**
+ * 입력에서 Mermaid 소스를 추출한다.
+ * 1) ```mermaid 펜스 코드블록이 있으면 그 안을 사용
+ * 2) 없으면 첫 줄이 Mermaid 키워드로 시작할 때만 전체를 Mermaid로 간주
+ * 3) 둘 다 아니면(=자연어) null → 미리보기를 시도하지 않음
+ */
+function extractMermaid(text: string): string | null {
+  const fenced = /```mermaid\s*\n([\s\S]*?)```/i.exec(text);
+  if (fenced) return fenced[1].trim();
+  const trimmed = text.trim();
+  return MERMAID_KEYWORDS.test(trimmed) ? trimmed : null;
+}
+
 export function MermaidPreview({ visible }: MermaidPreviewProps) {
   const { rawText } = useDocumentStore();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -21,8 +38,12 @@ export function MermaidPreview({ visible }: MermaidPreviewProps) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!visible || !rawText.trim()) {
+    // 이 앱의 입력은 대부분 "자연어"다. 자연어를 Mermaid로 렌더하면 매번
+    // "Syntax error in text"가 떠 UX를 해친다. → 입력이 실제 Mermaid일 때만 렌더.
+    const source = extractMermaid(rawText);
+    if (!visible || !source) {
       setSvg(null);
+      setError(null);
       return;
     }
 
@@ -36,27 +57,29 @@ export function MermaidPreview({ visible }: MermaidPreviewProps) {
           startOnLoad: false,
           theme: "default",
           // 사용자 입력을 그대로 렌더링하므로 strict로 XSS 방지
-          securityLevel: "antiscript",
+          securityLevel: "strict",
           flowchart: { useMaxWidth: false },
         });
 
         // 렌더링마다 유니크한 ID 사용 → 임시 DOM 노드 충돌/잔여 방지
         const renderId = `mermaid-preview-${Date.now()}`;
-        // 텍스트에서 mermaid 코드블록 추출 시도
-        // 또는 전체 텍스트를 mermaid로 해석
         const { svg: rendered } = await mermaid.render(
           renderId,
-          rawText.slice(0, 1000),
+          source!.slice(0, 1000),
         );
 
         if (!cancelled) {
           setSvg(rendered);
           setError(null);
         }
-      } catch {
+      } catch (err) {
         if (!cancelled) {
           setSvg(null);
-          setError(null);
+          // 문법 오류(Parse/Syntax error)는 "아직 작성 중"인 정상 상황 → 표시 안 함
+          const msg = (err as Error).message ?? "";
+          setError(
+            /parse error|syntax error/i.test(msg) ? null : msg,
+          );
         }
       }
     }

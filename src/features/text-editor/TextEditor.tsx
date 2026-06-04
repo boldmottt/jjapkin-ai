@@ -6,7 +6,14 @@ import { MermaidPreview } from "@/features/diagram-generator/MermaidPreview";
 import { TypeSelector } from "@/features/diagram-generator/TypeSelector";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { DiagramType, GenerationCandidate } from "@/types";
+import { readJsonResponse } from "@/lib/api-client";
 import { toast } from "@/stores/toast";
+
+type ApiResult = {
+  success: boolean;
+  error?: { message?: string };
+  data: { candidates: GenerationCandidate[]; recommendedType: DiagramType };
+};
 import {
   loadSnippets,
   saveSnippet,
@@ -58,7 +65,7 @@ export function TextEditor() {
             ...(activeDiagramType ? { diagramType: activeDiagramType } : {}),
           }),
         });
-        const json = await res.json();
+        const json = await readJsonResponse<ApiResult>(res);
         if (!json.success) throw new Error(json.error?.message ?? "생성 실패");
 
         const candidates = json.data.candidates as GenerationCandidate[];
@@ -114,7 +121,7 @@ export function TextEditor() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ image: dataUrl }),
         });
-        const json = await res.json();
+        const json = await readJsonResponse<ApiResult>(res);
         if (!json.success) throw new Error(json.error?.message ?? "이미지 변환 실패");
         const candidates = json.data.candidates as GenerationCandidate[];
         setCandidates(candidates);

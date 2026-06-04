@@ -8,6 +8,7 @@ import {
 import { iconToDataUrl } from "@/lib/icons/render";
 import { applyTheme, THEMES } from "@/lib/themes";
 import { applyEditOps } from "@/lib/scene/edit";
+import { readJsonResponse } from "@/lib/api-client";
 import { useRegisterCommands } from "@/hooks/useCommands";
 import type { Command } from "@/stores/commands";
 import { ExcalidrawWrapper, type ExcalidrawElement } from "./ExcalidrawWrapper";
@@ -130,6 +131,16 @@ export function CanvasEditor() {
     setSceneElements(next);
   }, []);
 
+  // Excalidraw API 준비 콜백 — 반드시 "안정적인" 참조여야 한다.
+  // 매 렌더 새 함수를 넘기면 Excalidraw 내부 effect([excalidrawAPI] 의존)가
+  // 매번 재실행 → setSceneElements → 재렌더 → 무한 루프(Maximum update depth).
+  const handleApiReady = useCallback((api: ExcalidrawImperativeAPI) => {
+    apiRef.current = api;
+    setSceneElements(
+      api.getSceneElements() as unknown as readonly ExcalidrawElement[],
+    );
+  }, []);
+
   // 스마트 제안: 첫 노드 강조
   const handleSuggestEmphasize = useCallback(() => {
     const first = sceneElements.find((e) =>
@@ -249,9 +260,13 @@ export function CanvasEditor() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ instruction, selection }),
         });
-        const json = await res.json();
+        const json = await readJsonResponse<{
+          success: boolean;
+          error?: { message?: string };
+          data: { ops: Parameters<typeof applyEditOps>[2] };
+        }>(res);
         if (!json.success) throw new Error(json.error?.message ?? "AI 수정 실패");
-        const ops = json.data.ops as Parameters<typeof applyEditOps>[2];
+        const ops = json.data.ops;
         applyElements(applyEditOps(sceneElements, selectedIds, ops));
         toast.success(`AI 수정 적용 (${ops.length}개 변경)`);
       } catch (err) {
@@ -482,12 +497,7 @@ export function CanvasEditor() {
               key={selectedCandidateId}
               initialElements={excalidrawElements}
               initialFiles={scene.files}
-              onApiReady={(api) => {
-                apiRef.current = api;
-                setSceneElements(
-                  api.getSceneElements() as unknown as readonly ExcalidrawElement[],
-                );
-              }}
+              onApiReady={handleApiReady}
               onChange={handleSceneChange}
               theme="light"
             />
