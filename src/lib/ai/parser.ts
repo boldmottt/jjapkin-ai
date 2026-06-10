@@ -35,16 +35,19 @@ const edgeSchema = z.object({
 const diagramTypeSchema = z.enum(DIAGRAM_TYPES);
 
 const candidateSchema = z.object({
-  id: z.string().min(1),
+  // AI가 id를 빠뜨려도 실패시키지 않고 파서에서 c1, c2…로 보정
+  id: z.string().min(1).optional(),
   diagramType: diagramTypeSchema,
   title: z.string().min(1, "Title is required").max(200),
   description: z.string().max(500).optional(),
   nodes: z.array(nodeSchema).min(1, "At least one node required").max(15),
-  edges: z.array(edgeSchema).max(30),
+  // card-grid/venn 등 "엣지 없음" 타입에서 AI가 필드를 생략하는 경우 허용
+  edges: z.array(edgeSchema).max(30).default([]),
 });
 
 const aiResponseSchema = z.object({
-  candidates: z.array(candidateSchema).min(1).max(3),
+  // AI가 3개 초과로 반환해도 실패 대신 앞 3개만 사용
+  candidates: z.array(candidateSchema).min(1).max(10),
 });
 
 // ── 파서 함수 ──────────────────────────────────────
@@ -65,27 +68,35 @@ export function parseAIResponse(rawJson: unknown): GenerationCandidate[] {
     );
   }
 
-  // 기본값 보정
-  return result.data.candidates.map((c) => ({
-    id: c.id,
-    ir: {
-      diagramType: c.diagramType,
-      title: c.title,
-      description: c.description,
-      nodes: c.nodes.map((n) => {
-        const type = n.type ?? "process"; // 기본값 보정
-        return {
-          ...n,
-          type,
-          color: n.color ?? DEFAULT_NODE_COLORS[type],
-        };
-      }),
-      edges: c.edges.map((e) => ({
-        ...e,
-        label: e.label ?? undefined, // 빈 문자열 → undefined
-      })),
-    },
-  }));
+  // 기본값 보정 (3개 초과 후보는 버림)
+  return result.data.candidates.slice(0, 3).map((c, i) => {
+    const nodeIds = new Set(c.nodes.map((n) => n.id));
+    return {
+      id: c.id ?? `c${i + 1}`,
+      ir: {
+        diagramType: c.diagramType,
+        title: c.title,
+        description: c.description,
+        nodes: c.nodes.map((n) => {
+          const type = n.type ?? "process"; // 기본값 보정
+          return {
+            ...n,
+            type,
+            color: n.color ?? DEFAULT_NODE_COLORS[type],
+          };
+        }),
+        // 자기 자신 루프·없는 노드 참조 엣지는 그릴 수 없으므로 제거
+        edges: c.edges
+          .filter(
+            (e) => e.from !== e.to && nodeIds.has(e.from) && nodeIds.has(e.to),
+          )
+          .map((e) => ({
+            ...e,
+            label: e.label || undefined, // 빈 문자열 → undefined
+          })),
+      },
+    };
+  });
 }
 
 /**
@@ -128,8 +139,8 @@ export function inferDiagramType(text: string): DiagramType {
   const lower = text.toLowerCase();
 
   // 키워드 기반 휴리스틱 (우선순위 순)
-  // 1. 분기: if-else, 조건부
-  if (/(or|또는|혹은|if\b|만약|otherwise|아니면|그렇지 않으면)/.test(lower)) {
+  // 1. 분기: if-else, 조건부 (\b 없으면 "or"가 order/for 등에 오매칭)
+  if (/(\bor\b|또는|혹은|\bif\b|만약|otherwise|아니면|그렇지 않으면)/.test(lower)) {
     return "flowchart";
   }
   // 2. 계층/조직: 트리 구조 (프로세스보다 먼저 체크!)

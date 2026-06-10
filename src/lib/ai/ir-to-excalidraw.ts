@@ -12,6 +12,7 @@ import { getLayout } from "@/lib/layout/registry";
 import { getDecorations } from "@/lib/layout/decorations";
 import type { NodePosition } from "@/lib/layout/types";
 import { NODE_W, NODE_H } from "@/lib/layout/constants";
+import { textWidth } from "@/lib/layout/measure";
 import { iconToDataUrl } from "@/lib/icons/render";
 import { idealTextColor } from "@/lib/scene/color";
 
@@ -27,6 +28,14 @@ const FONT_FAMILY = 2; // normal
 // ── 메인 변환 함수 (레이아웃 호출 + Excalidraw 어댑터) ─
 
 export function irToExcalidraw(ir: DiagramIR): ExElement[] {
+  return buildScene(ir).elements;
+}
+
+/** 변환 본체. 레이아웃을 한 번만 계산해 elements와 함께 돌려준다. */
+function buildScene(ir: DiagramIR): {
+  elements: ExElement[];
+  positions: NodePosition[];
+} {
   // ID 생성기를 함수 스코프 클로저로 둠 → 호출마다 0부터 시작하여 멱등성 보장
   let idCounter = 0;
   const uid = () => `elem_${++idCounter}`;
@@ -91,7 +100,7 @@ export function irToExcalidraw(ir: DiagramIR): ExElement[] {
   // 노드 앞(전경) 장식(막대 값 라벨 등)
   elements.push(...(decorations.front as ExElement[]));
 
-  return elements;
+  return { elements, positions: nodePositions };
 }
 
 // ── 아이콘 포함 변환 (image 요소 + files) ────────────
@@ -106,18 +115,22 @@ const ICON_SIZE = 22;
 const ICON_PAD = 8;
 
 /**
- * 아이콘까지 포함해 변환한다. 아이콘은 image 요소로 추가되고, 그 dataURL은
- * files 맵에 담긴다. 아이콘은 IR의 node.icon에서 결정적으로 재생성되므로
- * files를 따로 영속화할 필요가 없다(저장/복원 시 IR에서 재계산).
+ * 아이콘·제목까지 포함해 변환한다(캔버스/내보내기 실사용 경로). 아이콘은
+ * image 요소로 추가되고, 그 dataURL은 files 맵에 담긴다. 아이콘은 IR의
+ * node.icon에서 결정적으로 재생성되므로 files를 따로 영속화할 필요가
+ * 없다(저장/복원 시 IR에서 재계산).
  */
 export function irToExcalidrawWithFiles(ir: DiagramIR): {
   elements: ExElement[];
   files: SceneFiles;
 } {
-  const elements = irToExcalidraw(ir);
+  const { elements, positions } = buildScene(ir);
   const files: SceneFiles = {};
 
-  const positions = getLayout(ir.diagramType)(ir.nodes, ir.edges);
+  if (ir.title && positions.length > 0) {
+    elements.unshift(createTitleElement(ir.title, positions));
+  }
+
   const nodeById = new Map(ir.nodes.map((n) => [n.id, n]));
 
   for (const pos of positions) {
@@ -204,6 +217,40 @@ function createTextElement(
   };
 }
 
+/**
+ * 두 노드의 상대 위치에 따라 화살표가 닿을 변(상/하/좌/우)의 중점을 고른다.
+ * 항상 "아래→위"로만 잇던 과거 방식은 가로 레이아웃(process/timeline)이나
+ * 방사형(mindmap)에서 화살표가 노드를 관통해 보였다.
+ */
+function anchorPoints(
+  from: NodePosition,
+  to: NodePosition,
+): { fromX: number; fromY: number; toX: number; toY: number } {
+  const fw = from.w ?? NODE_W;
+  const fh = from.h ?? NODE_H;
+  const tw = to.w ?? NODE_W;
+  const th = to.h ?? NODE_H;
+  const dx = to.x + tw / 2 - (from.x + fw / 2);
+  const dy = to.y + th / 2 - (from.y + fh / 2);
+
+  if (Math.abs(dx) > Math.abs(dy)) {
+    // 가로 우세: from의 좌/우 변 ↔ to의 반대 변
+    return {
+      fromX: from.x + (dx > 0 ? fw : 0),
+      fromY: from.y + fh / 2,
+      toX: to.x + (dx > 0 ? 0 : tw),
+      toY: to.y + th / 2,
+    };
+  }
+  // 세로 우세: from의 상/하 변 ↔ to의 반대 변
+  return {
+    fromX: from.x + fw / 2,
+    fromY: from.y + (dy > 0 ? fh : 0),
+    toX: to.x + tw / 2,
+    toY: to.y + (dy > 0 ? 0 : th),
+  };
+}
+
 function createArrowElement(
   from: NodePosition,
   to: NodePosition,
@@ -211,10 +258,7 @@ function createArrowElement(
   fromId: string | undefined,
   toId: string | undefined,
 ): ExElement {
-  const fromX = from.x + (from.w ?? NODE_W) / 2;
-  const fromY = from.y + (from.h ?? NODE_H);
-  const toX = to.x + (to.w ?? NODE_W) / 2;
-  const toY = to.y;
+  const { fromX, fromY, toX, toY } = anchorPoints(from, to);
 
   return {
     type: "arrow",
@@ -282,7 +326,8 @@ function createEdgeLabel(
   const toCy = to.y + (to.h ?? NODE_H) / 2;
   const midX = (fromCx + toCx) / 2;
   const midY = (fromCy + toCy) / 2;
-  const width = Math.max(40, label.length * 8);
+  // CJK 폭 반영(글자수×8은 한글 라벨이 잘림). 라벨 폰트는 12px = 16px의 0.75배
+  const width = Math.max(40, Math.ceil(textWidth(label) * 0.75) + 16);
   return {
     type: "text",
     id: uid(),
@@ -295,6 +340,35 @@ function createEdgeLabel(
     fontFamily: FONT_FAMILY,
     strokeColor: "#6B7280",
     backgroundColor: "#ffffff",
+    roughness: 0,
+    textAlign: "center",
+    verticalAlign: "middle",
+    containerId: null,
+    boundElements: null,
+  };
+}
+
+/** 다이어그램 제목: 노드 영역 상단 중앙의 큰 텍스트(내보내기에도 포함됨) */
+function createTitleElement(
+  title: string,
+  positions: NodePosition[],
+): ExElement {
+  const TITLE_SIZE = 24;
+  const minX = Math.min(...positions.map((p) => p.x));
+  const maxX = Math.max(...positions.map((p) => p.x + (p.w ?? NODE_W)));
+  const minY = Math.min(...positions.map((p) => p.y));
+  const width = Math.max(80, Math.ceil(textWidth(title) * (TITLE_SIZE / 16)));
+  return {
+    type: "text",
+    id: "diagram_title",
+    x: (minX + maxX) / 2 - width / 2,
+    y: minY - TITLE_SIZE - 36,
+    width,
+    height: TITLE_SIZE + 8,
+    text: title,
+    fontSize: TITLE_SIZE,
+    fontFamily: FONT_FAMILY,
+    strokeColor: "#111827",
     roughness: 0,
     textAlign: "center",
     verticalAlign: "middle",

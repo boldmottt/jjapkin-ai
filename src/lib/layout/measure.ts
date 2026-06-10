@@ -27,7 +27,8 @@ function charWidth(ch: string): number {
   return wide ? FONT_SIZE : FONT_SIZE * 0.56;
 }
 
-function textWidth(label: string): number {
+/** 폰트 16px 기준 라벨의 대략 폭(px). CJK는 전각 폭으로 계산 */
+export function textWidth(label: string): number {
   let w = 0;
   for (const ch of label) w += charWidth(ch);
   return w;
